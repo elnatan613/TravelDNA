@@ -36,6 +36,8 @@ IMPORTANCE_ANCHORS = {
 CITIES = [
     "Paris", "Barcelona", "Amsterdam", "Prague", "Vienna",
     "Reykjavik", "Lisbon", "Budapest", "Krakow", "Berlin",
+    "Rome", "Florence", "Copenhagen", "Stockholm", "Dublin",
+    "Edinburgh", "Athens", "Porto",
 ]
 
 # כשרות - constraint בוליארי בצד המשתמש, לא ציר. בצד העיר יש שדה מקביל

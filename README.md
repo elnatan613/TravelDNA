@@ -56,7 +56,7 @@ travel-dna/
 │   ├── raw/                # דאטה גולמי לפני עיבוד
 │   └── processed/          # destinations.json - הפלט הסופי לשימוש matching
 ├── scripts/
-│   ├── destination_scraper.py   # GeoNames + OpenTripMap (urban/culture/nightlife וכו')
+│   ├── destination_scraper.py   # GeoNames + Overpass/OSM (urban/culture/nightlife וכו')
 │   ├── numbeo_fetcher.py        # ציר price_sensitivity (TODO)
 │   └── kashrut_fetcher.py       # kosher_availability לכל עיר (TODO)
 ├── nlp/
@@ -79,11 +79,17 @@ travel-dna/
 pip install -r requirements.txt
 ```
 
-יש להירשם (חינם) ולקבל מפתחות:
+יש להירשם (חינם) ולקבל מפתח:
 - GeoNames: https://www.geonames.org/login
-- OpenTripMap: https://opentripmap.io/product
 
-ולעדכן אותם בראש `scripts/destination_scraper.py`.
+ולהגדיר אותו כמשתנה סביבה (לא לשמור מפתחות בקוד/בגיט):
+```powershell
+setx GEONAMES_USERNAME "your_username"
+```
+(שימו לב: `setx` נכתב לרישום המשתמש, אבל טרמינלים שכבר פתוחים לא רואים אותו - רק הפעלות חדשות)
+
+נתוני נקודות העניין (culture/nightlife/food/activity) מגיעים מ-Overpass API
+(OpenStreetMap) - שירות ציבורי חינמי, בלי הרשמה ובלי מפתח בכלל.
 
 ## הרצה מהירה (עם דאטה דמה, בלי לחכות לשום API)
 
@@ -98,8 +104,8 @@ streamlit run app/demo.py        # דמו מלא, עם התראה אם דאטה 
 - [x] מבנה פרויקט + config משותף עם 7 הצירים המדודים
 - [x] מנוע התאמה (מרחק משוקלל) - עובד
 - [x] שלד NLP: rule-based mapping לשאלות סגורות + validation/clamping - עובד
-- [x] שליפת דאטה גיאוגרפי (GeoNames + OpenTripMap) - עובד, טרם הורחב ל-15-20 ערים
-- [ ] ציר `price_sensitivity` (Numbeo) - שלד בלבד
+- [x] שליפת דאטה גיאוגרפי (GeoNames + Overpass/OSM) - עובד, הורחב ל-18 ערים, destinations.json מוכן
+- [x] ציר `price_sensitivity` (Numbeo Cost of Living Index, נאסף ידנית - לא scraping, ראו scripts/numbeo_fetcher.py)
 - [ ] `kosher_availability` לכל עיר (חב"ד + מסעדות כשרות) - שלד בלבד
 - [ ] חילוץ LLM אמיתי מהטקסט הפתוח - כרגע דמה מחזירה dict ריק
 - [ ] RAG על 2-3 ערים נבחרות
