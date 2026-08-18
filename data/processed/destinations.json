@@ -12,7 +12,8 @@
       "activity_density": 1.0,
       "food": 1.0,
       "price_sensitivity": 0.42
-    }
+    },
+    "kosher_availability": 1.0
   },
   {
     "city": "Barcelona",
@@ -27,7 +28,8 @@
       "activity_density": 0.34,
       "food": 0.38,
       "price_sensitivity": 0.81
-    }
+    },
+    "kosher_availability": 0.02
   },
   {
     "city": "Amsterdam",
@@ -42,7 +44,8 @@
       "activity_density": 0.2,
       "food": 0.18,
       "price_sensitivity": 0.35
-    }
+    },
+    "kosher_availability": 0.19
   },
   {
     "city": "Prague",
@@ -51,13 +54,14 @@
     "lng": 14.42076,
     "axes": {
       "urban": 0.32,
-      "culture": 0.62,
+      "culture": 0.61,
       "nightlife": 0.3,
       "social": 0.22,
       "activity_density": 0.48,
       "food": 0.21,
       "price_sensitivity": 0.86
-    }
+    },
+    "kosher_availability": 0.17
   },
   {
     "city": "Vienna",
@@ -72,7 +76,8 @@
       "activity_density": 0.3,
       "food": 0.28,
       "price_sensitivity": 0.5
-    }
+    },
+    "kosher_availability": 0.36
   },
   {
     "city": "Reykjavik",
@@ -87,7 +92,8 @@
       "activity_density": 0.0,
       "food": 0.0,
       "price_sensitivity": 0.0
-    }
+    },
+    "kosher_availability": 0.0
   },
   {
     "city": "Lisbon",
@@ -102,7 +108,8 @@
       "activity_density": 0.21,
       "food": 0.24,
       "price_sensitivity": 0.9
-    }
+    },
+    "kosher_availability": 0.02
   },
   {
     "city": "Budapest",
@@ -117,7 +124,8 @@
       "activity_density": 0.22,
       "food": 0.18,
       "price_sensitivity": 0.9
-    }
+    },
+    "kosher_availability": 0.19
   },
   {
     "city": "Krakow",
@@ -132,7 +140,8 @@
       "activity_density": 0.11,
       "food": 0.09,
       "price_sensitivity": 1.0
-    }
+    },
+    "kosher_availability": 0.07
   },
   {
     "city": "Berlin",
@@ -147,7 +156,8 @@
       "activity_density": 0.51,
       "food": 0.35,
       "price_sensitivity": 0.54
-    }
+    },
+    "kosher_availability": 0.29
   },
   {
     "city": "Rome",
@@ -162,7 +172,8 @@
       "activity_density": 0.23,
       "food": 0.26,
       "price_sensitivity": 0.8
-    }
+    },
+    "kosher_availability": 0.08
   },
   {
     "city": "Florence",
@@ -177,7 +188,8 @@
       "activity_density": 0.03,
       "food": 0.08,
       "price_sensitivity": 0.57
-    }
+    },
+    "kosher_availability": 0.02
   },
   {
     "city": "Copenhagen",
@@ -192,7 +204,8 @@
       "activity_density": 0.06,
       "food": 0.17,
       "price_sensitivity": 0.24
-    }
+    },
+    "kosher_availability": 0.04
   },
   {
     "city": "Stockholm",
@@ -207,7 +220,8 @@
       "activity_density": 0.12,
       "food": 0.16,
       "price_sensitivity": 0.4
-    }
+    },
+    "kosher_availability": 0.04
   },
   {
     "city": "Dublin",
@@ -222,7 +236,8 @@
       "activity_density": 0.09,
       "food": 0.1,
       "price_sensitivity": 0.46
-    }
+    },
+    "kosher_availability": 0.02
   },
   {
     "city": "Edinburgh",
@@ -237,7 +252,8 @@
       "activity_density": 0.08,
       "food": 0.09,
       "price_sensitivity": 0.52
-    }
+    },
+    "kosher_availability": 0.01
   },
   {
     "city": "Athens",
@@ -252,7 +268,8 @@
       "activity_density": 0.07,
       "food": 0.27,
       "price_sensitivity": 0.87
-    }
+    },
+    "kosher_availability": 0.05
   },
   {
     "city": "Porto",
@@ -267,6 +284,7 @@
       "activity_density": 0.14,
       "food": 0.12,
       "price_sensitivity": 1.0
-    }
+    },
+    "kosher_availability": 0.5
   }
 ]

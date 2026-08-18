@@ -57,8 +57,8 @@ travel-dna/
 │   └── processed/          # destinations.json - הפלט הסופי לשימוש matching
 ├── scripts/
 │   ├── destination_scraper.py   # GeoNames + Overpass/OSM (urban/culture/nightlife וכו')
-│   ├── numbeo_fetcher.py        # ציר price_sensitivity (TODO)
-│   └── kashrut_fetcher.py       # kosher_availability לכל עיר (TODO)
+│   ├── numbeo_fetcher.py        # ציר price_sensitivity (Numbeo Cost of Living Index)
+│   └── kashrut_fetcher.py       # kosher_availability לכל עיר (Overpass/OSM - בתי כנסת + diet:kosher)
 ├── nlp/
 │   └── profile_extractor.py     # rule-based mapping + LLM לטקסט חופשי בלבד
 ├── matching/
@@ -106,7 +106,7 @@ streamlit run app/demo.py        # דמו מלא, עם התראה אם דאטה 
 - [x] שלד NLP: rule-based mapping לשאלות סגורות + validation/clamping - עובד
 - [x] שליפת דאטה גיאוגרפי (GeoNames + Overpass/OSM) - עובד, הורחב ל-18 ערים, destinations.json מוכן
 - [x] ציר `price_sensitivity` (Numbeo Cost of Living Index, נאסף ידנית - לא scraping, ראו scripts/numbeo_fetcher.py)
-- [ ] `kosher_availability` לכל עיר (חב"ד + מסעדות כשרות) - שלד בלבד
+- [x] `kosher_availability` לכל עיר (Overpass/OSM - בתי כנסת + diet:kosher, ראו scripts/kashrut_fetcher.py)
 - [ ] חילוץ LLM אמיתי מהטקסט הפתוח - כרגע דמה מחזירה dict ריק
 - [ ] RAG על 2-3 ערים נבחרות
 - [ ] Trip Planning Agent (כלים: חיפוש ידע, חישוב תקציב)

@@ -13,8 +13,9 @@
    לאף שירות חיצוני להתאושש)
 
 הציר price_sensitivity לא מגיע מ-Overpass/GeoNames אלא מ-numbeo_fetcher.py
-(עדיין דמה - ראו TODO ב-README). הוא משולב כאן כדי ש-destinations.json יכיל
-את כל 7 הצירים, אבל הערך עצמו יהיה 0.5 לכולם עד שהמימוש האמיתי ב-Numbeo יבוצע.
+(Numbeo Cost of Living Index, נאסף ידנית - ראו שם). kosher_availability
+(לא אחד מ-7 הצירים - שדה נוסף על היעד, ראו README) מגיע מ-kashrut_fetcher.py
+(גם הוא מ-Overpass, בתי כנסת + מקומות diet:kosher=yes).
 
 תרגום ביקורות (לשלב הבא, כשעוברים לביקורות גוגל בשפות זרות):
    משתמשים בספריית deep-translator, שמפעילה את המנוע של גוגל טרנסלייט
@@ -52,7 +53,8 @@ sys.path.append(_PROJECT_ROOT)
 sys.path.append(_SCRIPTS_DIR)
 
 from config import CITIES, AXES  # מקור אמת יחיד לרשימת הערים ולשמות הצירים
-from numbeo_fetcher import get_budget_score  # ציר price_sensitivity - דמה כרגע, ראו README
+from numbeo_fetcher import get_budget_score  # ציר price_sensitivity
+from kashrut_fetcher import compute_jewish_community_scores  # kosher_availability - לא ציר, שדה נוסף
 
 try:
     from deep_translator import GoogleTranslator
@@ -162,27 +164,41 @@ COUNT_BASED_AXIS_TAG_QUERIES = {
 ACTIVITY_DENSITY_TAG_QUERIES = ['["tourism"]']
 
 
-def get_city_coordinates(city_name):
-    """שולף קואורדינטות ומידע בסיסי מ-GeoNames לפי שם עיר."""
+def get_city_coordinates(city_name, max_retries=3):
+    """
+    שולף קואורדינטות ומידע בסיסי מ-GeoNames לפי שם עיר.
+
+    עם ניסיונות חזרה על תקלות רשת זמניות (DNS/connection reset וכו') - בלי
+    זה, תקלת רשת חד-פעמית באמצע ריצה של 15-20 דקות הייתה מפילה את כל
+    התהליך (בדיוק מה שקרה בפועל: DNS resolution נכשל לרגע על עיר אחת
+    והריצה השלמה קרסה, בזמן שהקריאות ל-Overpass כבר היו מוגנות retry).
+    מחזיר None גם אם GeoNames לא מצא את העיר וגם אם כל הניסיונות נכשלו.
+    """
     url = "http://api.geonames.org/searchJSON"
     params = {
         "q": city_name,
         "maxRows": 1,
         "username": GEONAMES_USERNAME,
     }
-    resp = requests.get(url, params=params, timeout=10)
-    time.sleep(REQUEST_DELAY_SECONDS)
-    data = resp.json()
-    if not data.get("geonames"):
-        return None
-    result = data["geonames"][0]
-    return {
-        "name": result["name"],
-        "lat": float(result["lat"]),
-        "lng": float(result["lng"]),
-        "population": result.get("population", 0),
-        "country": result.get("countryName", ""),
-    }
+    for attempt in range(max_retries):
+        try:
+            resp = requests.get(url, params=params, timeout=10)
+            time.sleep(REQUEST_DELAY_SECONDS)
+            data = resp.json()
+            if not data.get("geonames"):
+                return None
+            result = data["geonames"][0]
+            return {
+                "name": result["name"],
+                "lat": float(result["lat"]),
+                "lng": float(result["lng"]),
+                "population": result.get("population", 0),
+                "country": result.get("countryName", ""),
+            }
+        except (requests.RequestException, ValueError) as e:
+            print(f"  אזהרה: קריאה ל-GeoNames נכשלה עבור {city_name} ({e}) (ניסיון {attempt + 1}/{max_retries})")
+            time.sleep(REQUEST_DELAY_SECONDS * 2)
+    return None
 
 
 def _build_set_clause(set_name, tag_filters, lat, lng, radius):
@@ -350,6 +366,11 @@ def main():
             {city: raw_counts_by_city[city][raw_key] for city in raw_counts_by_city}
         )
 
+    # kosher_availability - לא אחד מ-7 הצירים, שדה נוסף על היעד (ראו README).
+    # מחושב בבת אחת לכל הערים (לא עיר-עיר) כי הציון מנורמל יחסית לכולן -
+    # ראו compute_jewish_community_scores ב-kashrut_fetcher.py.
+    kosher_scores = compute_jewish_community_scores(coords_by_city)
+
     results = []
     for city, coords in coords_by_city.items():
         axes_scores = {
@@ -359,8 +380,6 @@ def main():
             "social": normalized_by_axis["social"][city],
             "activity_density": normalized_by_axis["activity_density"][city],
             "food": normalized_by_axis["food"][city],
-            # דמה כרגע - ראו numbeo_fetcher.py וה-TODO המתאים ב-README.
-            # 0.5 לכולם עד שהמימוש האמיתי מול Numbeo יבוצע.
             "price_sensitivity": get_budget_score(city),
         }
         assert set(axes_scores.keys()) == set(AXES), (
@@ -373,8 +392,7 @@ def main():
                 "lat": coords["lat"],
                 "lng": coords["lng"],
                 "axes": axes_scores,
-                # TODO: kosher_availability יתווסף בנפרד ע"י kashrut_fetcher.py -
-                # זה לא אחד מ-7 הצירים, אלא שדה נוסף על היעד (ראו README).
+                "kosher_availability": kosher_scores.get(city, 0.5),
             }
         )
 
