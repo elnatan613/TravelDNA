@@ -40,7 +40,13 @@ CITIES = [
     "Edinburgh", "Athens", "Porto",
 ]
 
-# כשרות - constraint בוליארי בצד המשתמש, לא ציר. בצד העיר יש שדה מקביל
-# "kosher_availability" (0-1, ראו data/cities.json) שמייצג כמה קל להסתדר בעיר,
-# לא "אופי" העיר.
+# כשרות - constraint בוליארי בצד המשתמש (kosher: true/false), לא ציר.
+# בצד העיר יש שדה מקביל "kosher_availability" (0-1, ראו
+# data/processed/destinations.json) שמייצג כמה קל להסתדר בעיר, לא "אופי" העיר.
+#
+# כשהמשתמש מסמן kosher=true, matching/matcher.py מסנן החוצה יעדים עם
+# kosher_availability מתחת לסף הזה, *לפני* חישוב הדירוג המשוקלל (לא עוד
+# ציר שמשתתף במרחק). 0.3 הוא סף התחלתי שרירותי-במידה - "יש משהו, לא ריק
+# מתשתית" - קל לכוונן אם יתגלה בעתיד שהוא לא מספיק מחמיר/מקל.
+KOSHER_AVAILABILITY_THRESHOLD = 0.3
 

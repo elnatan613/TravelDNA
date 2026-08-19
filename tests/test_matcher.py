@@ -16,7 +16,7 @@ _PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(_PROJECT_ROOT)
 
 from matching.matcher import weighted_distance, rank_destinations, load_destinations
-from config import AXES
+from config import AXES, KOSHER_AVAILABILITY_THRESHOLD
 
 
 def _uniform(value=0.5):
@@ -94,6 +94,55 @@ def test_rank_destinations_preserves_original_fields_without_mutating_input():
 
 def test_rank_destinations_empty_list_returns_empty():
     assert rank_destinations(_uniform(0.5), _uniform(1.0), []) == []
+
+
+def _kosher_destinations():
+    return [
+        {"city": "Paris", "axes": _uniform(0.5), "kosher_availability": 0.9},
+        {"city": "Reykjavik", "axes": _uniform(0.5), "kosher_availability": 0.0},
+        {"city": "NoKosherField", "axes": _uniform(0.5)},  # דאטה ישן/חסר בכוונה
+    ]
+
+
+def test_requires_kosher_false_does_not_filter_anything():
+    ranked = rank_destinations(_uniform(0.5), _uniform(1.0), _kosher_destinations(), requires_kosher=False)
+    assert len(ranked) == 3
+
+
+def test_requires_kosher_true_filters_out_cities_below_threshold():
+    ranked = rank_destinations(_uniform(0.5), _uniform(1.0), _kosher_destinations(), requires_kosher=True)
+    cities = {r["city"] for r in ranked}
+    assert cities == {"Paris"}
+
+
+def test_requires_kosher_true_treats_missing_field_as_zero_not_a_free_pass():
+    # "NoKosherField" לא מציין kosher_availability בכלל - צריך להיחשב 0.0
+    # (הכי מחמיר) ולהיפסל, לא "לדלג" על הסינון כי הדאטה חסר.
+    destinations = [{"city": "NoKosherField", "axes": _uniform(0.5)}]
+    ranked = rank_destinations(_uniform(0.5), _uniform(1.0), destinations, requires_kosher=True)
+    assert ranked == []
+
+
+def test_requires_kosher_custom_threshold_is_respected():
+    destinations = [{"city": "Middling", "axes": _uniform(0.5), "kosher_availability": 0.5}]
+    # מעל הסף המרוכך (0.4) - נכנס
+    assert len(rank_destinations(_uniform(0.5), _uniform(1.0), destinations, requires_kosher=True, kosher_threshold=0.4)) == 1
+    # מתחת לסף המחמיר (0.6) - נפסל
+    assert rank_destinations(_uniform(0.5), _uniform(1.0), destinations, requires_kosher=True, kosher_threshold=0.6) == []
+
+
+def test_requires_kosher_default_threshold_matches_config():
+    destinations = [
+        {"city": "JustBelow", "axes": _uniform(0.5), "kosher_availability": KOSHER_AVAILABILITY_THRESHOLD - 0.01},
+        {"city": "JustAtThreshold", "axes": _uniform(0.5), "kosher_availability": KOSHER_AVAILABILITY_THRESHOLD},
+    ]
+    ranked = rank_destinations(_uniform(0.5), _uniform(1.0), destinations, requires_kosher=True)
+    assert [r["city"] for r in ranked] == ["JustAtThreshold"]
+
+
+def test_requires_kosher_all_filtered_out_returns_empty_not_crash():
+    destinations = [{"city": "TooLow", "axes": _uniform(0.5), "kosher_availability": 0.0}]
+    assert rank_destinations(_uniform(0.5), _uniform(1.0), destinations, requires_kosher=True) == []
 
 
 def test_load_destinations_missing_file_raises():

@@ -16,7 +16,7 @@ import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import streamlit as st
-from config import AXES
+from config import AXES, KOSHER_AVAILABILITY_THRESHOLD
 from matching.matcher import rank_destinations, load_destinations
 
 st.title("TravelDNA - ניסוי ידני למנוע ההתאמה")
@@ -32,6 +32,13 @@ for i, axis in enumerate(AXES):
     with cols[1]:
         weights[axis] = st.slider(f"חשיבות {axis}", 0.0, 3.0, 1.0, 0.5, key=f"w_{axis}")
 
+st.subheader("אילוץ כשרות (constraint, לא ציר)")
+requires_kosher = st.checkbox("דרוש כשרות (kosher=true)")
+kosher_threshold = st.slider(
+    "סף kosher_availability מינימלי", 0.0, 1.0, KOSHER_AVAILABILITY_THRESHOLD, 0.05,
+    disabled=not requires_kosher,
+)
+
 try:
     destinations = load_destinations()
 except FileNotFoundError:
@@ -39,7 +46,12 @@ except FileNotFoundError:
     destinations = []
 
 if destinations:
-    ranked = rank_destinations(traveler_vector, weights, destinations)
+    ranked = rank_destinations(
+        traveler_vector, weights, destinations,
+        requires_kosher=requires_kosher, kosher_threshold=kosher_threshold,
+    )
+    if requires_kosher:
+        st.caption(f"{len(destinations) - len(ranked)} ערים סוננו החוצה (kosher_availability < {kosher_threshold})")
     st.subheader(f"דירוג ({len(ranked)} ערים)")
     for r in ranked:
         with st.expander(f"{r['city']} ({r.get('country', '')}) - מרחק: {r['distance']}"):
