@@ -30,6 +30,23 @@
 
 הגדרות מדויקות ורשימת הערים הרשמית נמצאות ב-`config.py` - זה "החוזה" המשותף.
 
+## מקורות דאטה (לצד היעדים)
+
+לא "דאטהבייס" משלנו - אלה **מקורות דאטה חיצוניים** (שירותים/API-ים של גורם
+שלישי) שאנחנו שולפים מהם, ומרכיבים מהתשובות שלהם את `destinations.json`:
+
+| שדה | מקור | הערות |
+|---|---|---|
+| קואורדינטות, אוכלוסייה, מדינה | [GeoNames](https://www.geonames.org) | דורש חשבון חינמי + הפעלה נפרדת של ה-Free Web Services בהגדרות החשבון |
+| `urban` | GeoNames (אוכלוסייה, מנורמל min-max) | לא Overpass - ניסינו יחס landuse ב-OSM אבל זה נתן תוצאות לא הגיוניות (למשל ציון "טבעי" לפריז), כי תיוג landuse לא עקבי בין ערים; population הוא מדד פשוט ואמין יותר |
+| `culture`, `nightlife`, `food`, `social`, `activity_density` | [Overpass API](https://overpass-api.de) (OpenStreetMap) | חינמי לגמרי, בלי הרשמה ובלי מפתח. במקור תכננו OpenTripMap, אבל תהליך ההרשמה שלהם קרס בעקביות (שגיאת שרת 500) |
+| `price_sensitivity` | [Numbeo](https://www.numbeo.com) - Cost of Living Index | **נאסף ידנית** (לא סקריפט אוטומטי) מהדף הציבורי - ה-Terms of Use של Numbeo אוסרים scraping אוטומטי בלי אישור כתוב, אבל מתירים שימוש אקדמי עם קרדיט. ה-API הרשמי שלהם בתשלום בלבד ($260+/חודש) |
+| `kosher_availability` | Overpass (OSM) - `religion=jewish` + `diet:kosher=yes` | אותו מקור כמו הצירים למעלה. שקלנו Chabad.org (אין API ציבורי) ו-Google Places API (דורש חשבון עם כרטיס אשראי) ופסלנו את שניהם |
+
+הכל (חוץ מ-Numbeo, שהוא טבלה ידנית קבועה בקוד) נשלף מחדש בכל הרצה של
+`python scripts/destination_scraper.py`, ומיוצא ל-`data/processed/destinations.json`
+(קובץ JSON שטוח - גם הוא לא דאטהבייס, רק תוצר).
+
 ## איך לעבוד עם זה בשניים במקביל
 
 הפרויקט מחולק לשני חלקים עצמאיים שנפגשים רק דרך `config.py` ודרך פורמט
@@ -64,7 +81,8 @@ travel-dna/
 ├── matching/
 │   └── matcher.py                # מרחק משוקלל + דירוג יעדים (עובד עם דאטה דמה)
 ├── app/
-│   └── demo.py                   # דמו Streamlit שמחבר הכל
+│   ├── demo.py                    # דמו Streamlit שמחבר הכל (תלוי ב-nlp/)
+│   └── try_matching.py            # כלי ניסוי ידני ל-matcher.py - וקטור + kosher constraint, בלי nlp/
 ├── rag/                          # TODO - בסיס ידע עמוק ל-2-3 ערים נבחרות
 ├── agent/                        # TODO - Trip Planning Agent (retrieve + tools)
 └── tests/
@@ -79,17 +97,18 @@ travel-dna/
 pip install -r requirements.txt
 ```
 
-יש להירשם (חינם) ולקבל מפתח:
-- GeoNames: https://www.geonames.org/login
+יש להירשם (חינם) ולקבל מפתח - GeoNames הוא המקור היחיד שדורש מפתח בכלל
+(ראו טבלת "מקורות דאטה" למעלה):
+- https://www.geonames.org/login - ואז חשוב **גם** להפעיל את ה-Free Web
+  Services בעמוד https://www.geonames.org/manageaccount (לא מספיק רק להירשם)
 
-ולהגדיר אותו כמשתנה סביבה (לא לשמור מפתחות בקוד/בגיט):
-```powershell
-setx GEONAMES_USERNAME "your_username"
+הכי פשוט: קובץ `.env` בשורש הפרויקט (כבר ב-`.gitignore`, לא נכנס לגיט):
 ```
-(שימו לב: `setx` נכתב לרישום המשתמש, אבל טרמינלים שכבר פתוחים לא רואים אותו - רק הפעלות חדשות)
-
-נתוני נקודות העניין (culture/nightlife/food/activity) מגיעים מ-Overpass API
-(OpenStreetMap) - שירות ציבורי חינמי, בלי הרשמה ובלי מפתח בכלל.
+GEONAMES_USERNAME=your_username
+```
+(אפשר גם `setx GEONAMES_USERNAME "your_username"` ב-PowerShell/CMD - אבל
+שימו לב: משתני סביבה שהוגדרו כך נראים רק לתהליכים/טרמינלים *חדשים* שנפתחו
+אחרי ה-setx, לא לתהליכים שכבר היו פתוחים)
 
 ## הרצה מהירה (עם דאטה דמה, בלי לחכות לשום API)
 
@@ -97,6 +116,9 @@ setx GEONAMES_USERNAME "your_username"
 python matching/matcher.py       # בודק את מנוע ההתאמה על נתוני דוגמה
 python nlp/profile_extractor.py  # בודק את בניית הפרופיל (rule-based + דמה ל-LLM)
 streamlit run app/demo.py        # דמו מלא, עם התראה אם דאטה חסר
+
+# ניסוי ידני במנוע ההתאמה על הדאטה האמיתי (destinations.json) - בלי nlp/ בכלל:
+streamlit run app/try_matching.py
 ```
 
 ## סטטוס נוכחי
@@ -107,6 +129,7 @@ streamlit run app/demo.py        # דמו מלא, עם התראה אם דאטה 
 - [x] שליפת דאטה גיאוגרפי (GeoNames + Overpass/OSM) - עובד, הורחב ל-18 ערים, destinations.json מוכן
 - [x] ציר `price_sensitivity` (Numbeo Cost of Living Index, נאסף ידנית - לא scraping, ראו scripts/numbeo_fetcher.py)
 - [x] `kosher_availability` לכל עיר (Overpass/OSM - בתי כנסת + diet:kosher, ראו scripts/kashrut_fetcher.py)
+- [x] `matcher.py` מכבד את אילוץ הכשרות בפועל (`requires_kosher` - סינון קשה, לא ציר משוקלל)
 - [ ] חילוץ LLM אמיתי מהטקסט הפתוח - כרגע דמה מחזירה dict ריק
 - [ ] RAG על 2-3 ערים נבחרות
 - [ ] Trip Planning Agent (כלים: חיפוש ידע, חישוב תקציב)
