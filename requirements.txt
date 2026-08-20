@@ -2,3 +2,5 @@ requests
 streamlit
 deep-translator
 pytest
+sentence-transformers
+numpy

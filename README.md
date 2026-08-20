@@ -42,10 +42,12 @@
 | `culture`, `nightlife`, `food`, `social`, `activity_density` | [Overpass API](https://overpass-api.de) (OpenStreetMap) | חינמי לגמרי, בלי הרשמה ובלי מפתח. במקור תכננו OpenTripMap, אבל תהליך ההרשמה שלהם קרס בעקביות (שגיאת שרת 500) |
 | `price_sensitivity` | [Numbeo](https://www.numbeo.com) - Cost of Living Index | **נאסף ידנית** (לא סקריפט אוטומטי) מהדף הציבורי - ה-Terms of Use של Numbeo אוסרים scraping אוטומטי בלי אישור כתוב, אבל מתירים שימוש אקדמי עם קרדיט. ה-API הרשמי שלהם בתשלום בלבד ($260+/חודש) |
 | `kosher_availability` | Overpass (OSM) - `religion=jewish` + `diet:kosher=yes` | אותו מקור כמו הצירים למעלה. שקלנו Chabad.org (אין API ציבורי) ו-Google Places API (דורש חשבון עם כרטיס אשראי) ופסלנו את שניהם |
+| בסיס ידע RAG (`rag/knowledge_base/`) | [Wikivoyage](https://en.wikivoyage.org) - מדריכי טיולים | רישיון CC BY-SA, **API רשמי וחינמי** (מיועד לגישה תכנותית, לא כמו Numbeo) - נשלף ל-3 ערים נבחרות בלבד (Paris/Prague/Vienna), לא כל 18. Embeddings מחושבים מקומית (`sentence-transformers`, מודל `all-mpnet-base-v2`) - בלי API/מפתח חיצוני |
 
 הכל (חוץ מ-Numbeo, שהוא טבלה ידנית קבועה בקוד) נשלף מחדש בכל הרצה של
 `python scripts/destination_scraper.py`, ומיוצא ל-`data/processed/destinations.json`
-(קובץ JSON שטוח - גם הוא לא דאטהבייס, רק תוצר).
+(קובץ JSON שטוח - גם הוא לא דאטהבייס, רק תוצר). בסיס הידע של RAG נשלף
+בנפרד ע"י `python rag/build_knowledge_base.py`.
 
 ## איך לעבוד עם זה בשניים במקביל
 
@@ -83,13 +85,15 @@ travel-dna/
 ├── app/
 │   ├── demo.py                    # דמו Streamlit שמחבר הכל (תלוי ב-nlp/)
 │   └── try_matching.py            # כלי ניסוי ידני ל-matcher.py - וקטור + kosher constraint, בלי nlp/
-├── rag/                          # TODO - בסיס ידע עמוק ל-2-3 ערים נבחרות
-├── agent/                        # TODO - Trip Planning Agent (retrieve + tools)
+├── rag/
+│   ├── build_knowledge_base.py    # בונה בסיס ידע מ-Wikivoyage ל-RAG_CITIES (Paris/Prague/Vienna)
+│   ├── retriever.py                # חיפוש סמנטי (cosine similarity) בבסיס הידע שנבנה
+│   └── knowledge_base/             # תוצר: {city}_chunks.json + {city}_embeddings.npy
+├── agent/                        # TODO - Trip Planning Agent (ישתמש ב-rag/retriever.py + budget)
 └── tests/
 ```
 
-`rag/` ו-`agent/` עדיין לא קיימות בפועל - ייווצרו בשלב 2 של התכנון (אחרי
-ששלב ה-Profile + Matching עובד מקצה לקצה).
+`agent/` עדיין לא קיים בפועל - `rag/` כן (ראו טבלת "מקורות דאטה" למעלה).
 
 ## התקנה
 
@@ -119,6 +123,9 @@ streamlit run app/demo.py        # דמו מלא, עם התראה אם דאטה 
 
 # ניסוי ידני במנוע ההתאמה על הדאטה האמיתי (destinations.json) - בלי nlp/ בכלל:
 streamlit run app/try_matching.py
+
+# חיפוש סמנטי בבסיס הידע של RAG (Paris/Prague/Vienna, כבר בנוי ובגיט):
+python rag/retriever.py "best museums to visit" Paris
 ```
 
 ## סטטוס נוכחי
@@ -130,7 +137,7 @@ streamlit run app/try_matching.py
 - [x] ציר `price_sensitivity` (Numbeo Cost of Living Index, נאסף ידנית - לא scraping, ראו scripts/numbeo_fetcher.py)
 - [x] `kosher_availability` לכל עיר (Overpass/OSM - בתי כנסת + diet:kosher, ראו scripts/kashrut_fetcher.py)
 - [x] `matcher.py` מכבד את אילוץ הכשרות בפועל (`requires_kosher` - סינון קשה, לא ציר משוקלל)
+- [x] RAG - בסיס ידע מ-Wikivoyage ל-3 ערים נבחרות (Paris/Prague/Vienna), חיפוש סמנטי מקומי (ראו rag/)
 - [ ] חילוץ LLM אמיתי מהטקסט הפתוח - כרגע דמה מחזירה dict ריק
-- [ ] RAG על 2-3 ערים נבחרות
-- [ ] Trip Planning Agent (כלים: חיפוש ידע, חישוב תקציב)
+- [ ] Trip Planning Agent (כלים: rag/retriever.py לחיפוש ידע, חישוב תקציב)
 - [ ] דמו מחובר סופית
