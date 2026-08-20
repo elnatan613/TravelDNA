@@ -43,6 +43,7 @@
 | `price_sensitivity` | [Numbeo](https://www.numbeo.com) - Cost of Living Index | **נאסף ידנית** (לא סקריפט אוטומטי) מהדף הציבורי - ה-Terms of Use של Numbeo אוסרים scraping אוטומטי בלי אישור כתוב, אבל מתירים שימוש אקדמי עם קרדיט. ה-API הרשמי שלהם בתשלום בלבד ($260+/חודש) |
 | `kosher_availability` | Overpass (OSM) - `religion=jewish` + `diet:kosher=yes` | אותו מקור כמו הצירים למעלה. שקלנו Chabad.org (אין API ציבורי) ו-Google Places API (דורש חשבון עם כרטיס אשראי) ופסלנו את שניהם |
 | בסיס ידע RAG (`rag/knowledge_base/`) | [Wikivoyage](https://en.wikivoyage.org) - מדריכי טיולים | רישיון CC BY-SA, **API רשמי וחינמי** (מיועד לגישה תכנותית, לא כמו Numbeo) - נשלף ל-3 ערים נבחרות בלבד (Paris/Prague/Vienna), לא כל 18. Embeddings מחושבים מקומית (`sentence-transformers`, מודל `all-mpnet-base-v2`) - בלי API/מפתח חיצוני |
+| Trip Planning Agent (`agent/trip_planner.py`) | [Gemini API](https://ai.google.dev) (`gemini-3.5-flash`) | ה-LLM היחיד בפרויקט - יש לו שכבת חינם אמיתית בלי כרטיס אשראי (בדקנו במפורש; ב-Anthropic/OpenAI זה לא המצב). דורש `GEMINI_API_KEY` משלכם (חינמי, אישי - https://aistudio.google.com/apikey) |
 
 הכל (חוץ מ-Numbeo, שהוא טבלה ידנית קבועה בקוד) נשלף מחדש בכל הרצה של
 `python scripts/destination_scraper.py`, ומיוצא ל-`data/processed/destinations.json`
@@ -89,11 +90,10 @@ travel-dna/
 │   ├── build_knowledge_base.py    # בונה בסיס ידע מ-Wikivoyage ל-RAG_CITIES (Paris/Prague/Vienna)
 │   ├── retriever.py                # חיפוש סמנטי (cosine similarity) בבסיס הידע שנבנה
 │   └── knowledge_base/             # תוצר: {city}_chunks.json + {city}_embeddings.npy
-├── agent/                        # TODO - Trip Planning Agent (ישתמש ב-rag/retriever.py + budget)
+├── agent/
+│   └── trip_planner.py            # TripPlanningAgent - Gemini + 2 כלים (rag/retriever.py + budget)
 └── tests/
 ```
-
-`agent/` עדיין לא קיים בפועל - `rag/` כן (ראו טבלת "מקורות דאטה" למעלה).
 
 ## התקנה
 
@@ -101,18 +101,23 @@ travel-dna/
 pip install -r requirements.txt
 ```
 
-יש להירשם (חינם) ולקבל מפתח - GeoNames הוא המקור היחיד שדורש מפתח בכלל
-(ראו טבלת "מקורות דאטה" למעלה):
-- https://www.geonames.org/login - ואז חשוב **גם** להפעיל את ה-Free Web
-  Services בעמוד https://www.geonames.org/manageaccount (לא מספיק רק להירשם)
+יש להירשם (חינם) ולקבל מפתחות - שני מקורות דורשים מפתח (שאר המקורות
+בטבלה למעלה לא, ראו שם):
+- **GeoNames**: https://www.geonames.org/login - ואז חשוב **גם** להפעיל
+  את ה-Free Web Services בעמוד https://www.geonames.org/manageaccount
+  (לא מספיק רק להירשם)
+- **Gemini** (ל-`agent/trip_planner.py`): https://aistudio.google.com/apikey
+  - חינמי, בלי כרטיס אשראי, עם חשבון Google אישי (לא קשור לחשבון ארגוני
+    של מקום עבודה - זה API אחר ונפרד, גם אם דומה בשם)
 
 הכי פשוט: קובץ `.env` בשורש הפרויקט (כבר ב-`.gitignore`, לא נכנס לגיט):
 ```
 GEONAMES_USERNAME=your_username
+GEMINI_API_KEY=your_key
 ```
-(אפשר גם `setx GEONAMES_USERNAME "your_username"` ב-PowerShell/CMD - אבל
-שימו לב: משתני סביבה שהוגדרו כך נראים רק לתהליכים/טרמינלים *חדשים* שנפתחו
-אחרי ה-setx, לא לתהליכים שכבר היו פתוחים)
+(אפשר גם `setx VAR_NAME "value"` ב-PowerShell/CMD - אבל שימו לב: משתני
+סביבה שהוגדרו כך נראים רק לתהליכים/טרמינלים *חדשים* שנפתחו אחרי ה-setx,
+לא לתהליכים שכבר היו פתוחים)
 
 ## הרצה מהירה (עם דאטה דמה, בלי לחכות לשום API)
 
@@ -126,6 +131,9 @@ streamlit run app/try_matching.py
 
 # חיפוש סמנטי בבסיס הידע של RAG (Paris/Prague/Vienna, כבר בנוי ובגיט):
 python rag/retriever.py "best museums to visit" Paris
+
+# הסוכן המלא - בונה מסלול יום-יום (דורש GEMINI_API_KEY ב-.env):
+python agent/trip_planner.py Paris 3 500 "loves art and food, not much into nightlife"
 ```
 
 ## סטטוס נוכחי
@@ -138,6 +146,6 @@ python rag/retriever.py "best museums to visit" Paris
 - [x] `kosher_availability` לכל עיר (Overpass/OSM - בתי כנסת + diet:kosher, ראו scripts/kashrut_fetcher.py)
 - [x] `matcher.py` מכבד את אילוץ הכשרות בפועל (`requires_kosher` - סינון קשה, לא ציר משוקלל)
 - [x] RAG - בסיס ידע מ-Wikivoyage ל-3 ערים נבחרות (Paris/Prague/Vienna), חיפוש סמנטי מקומי (ראו rag/)
+- [x] Trip Planning Agent (`agent/trip_planner.py`) - Gemini + function calling, 2 כלים (חיפוש RAG + הערכת תקציב), עובד ונבדק על Paris/3 ימים/500$
 - [ ] חילוץ LLM אמיתי מהטקסט הפתוח - כרגע דמה מחזירה dict ריק
-- [ ] Trip Planning Agent (כלים: rag/retriever.py לחיפוש ידע, חישוב תקציב)
 - [ ] דמו מחובר סופית

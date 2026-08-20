@@ -12,7 +12,7 @@ _PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(_PROJECT_ROOT)
 sys.path.append(os.path.join(_PROJECT_ROOT, "scripts"))
 
-from numbeo_fetcher import get_budget_score, NUMBEO_COST_OF_LIVING_INDEX
+from numbeo_fetcher import get_budget_score, estimate_daily_cost_usd, NUMBEO_COST_OF_LIVING_INDEX
 from config import CITIES
 
 
@@ -48,3 +48,17 @@ def test_cheapest_city_scores_near_one():
 
 def test_unknown_city_returns_neutral_default():
     assert get_budget_score("Atlantis") == 0.5
+
+
+def test_estimate_daily_cost_usd_unknown_city_returns_none():
+    assert estimate_daily_cost_usd("Atlantis") is None
+
+
+def test_estimate_daily_cost_usd_positive_for_known_cities():
+    for city in NUMBEO_COST_OF_LIVING_INDEX:
+        assert estimate_daily_cost_usd(city) > 0
+
+
+def test_estimate_daily_cost_usd_scales_with_index():
+    # עיר יקרה יותר (אינדקס גבוה יותר) צריכה לקבל הערכת תקציב יומי גבוהה יותר
+    assert estimate_daily_cost_usd("Reykjavik") > estimate_daily_cost_usd("Porto")

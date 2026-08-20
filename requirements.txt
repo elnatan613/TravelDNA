@@ -4,3 +4,4 @@ deep-translator
 pytest
 sentence-transformers
 numpy
+google-genai

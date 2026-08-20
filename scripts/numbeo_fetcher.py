@@ -83,6 +83,26 @@ def get_budget_score(city_name: str) -> float:
     return round(1 - (index - lo) / (hi - lo), 2)
 
 
+# הערכה גסה (לא תחזית מחיר אמיתית!) לתקציב יומי "בינוני" לתייר - אוכל,
+# תחבורה מקומית, כניסות לאטרקציות - *לא* כולל לינה, בעיר במחיר NYC
+# (Cost of Living Index = 100). מספר שרירותי-במידה, שרק נועד לתת לסוכן
+# (agent/trip_planner.py) קנה מידה יחסי סביר בין ערים, לא הצעת מחיר אמיתית.
+BASELINE_DAILY_COST_USD_AT_NYC_INDEX = 150.0
+
+
+def estimate_daily_cost_usd(city_name: str) -> float | None:
+    """
+    מחזיר הערכה גסה לעלות יומית לתייר בעיר, ב-USD (בלי לינה) - סקלת
+    NUMBEO_COST_OF_LIVING_INDEX כפול BASELINE_DAILY_COST_USD_AT_NYC_INDEX.
+    לא מדויק, רק יחסי בין ערים. מחזיר None אם אין דאטה לעיר (לא 0 - כדי
+    לא להטעות שהעיר "בחינם").
+    """
+    if city_name not in NUMBEO_COST_OF_LIVING_INDEX:
+        return None
+    index = NUMBEO_COST_OF_LIVING_INDEX[city_name]
+    return round(BASELINE_DAILY_COST_USD_AT_NYC_INDEX * (index / 100), 1)
+
+
 if __name__ == "__main__":
     for city in CITIES:
-        print(f"{city}: {get_budget_score(city)}")
+        print(f"{city}: price_sensitivity={get_budget_score(city)}, ~${estimate_daily_cost_usd(city)}/day")
