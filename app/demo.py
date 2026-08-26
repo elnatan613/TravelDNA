@@ -40,9 +40,12 @@ st.set_page_config(page_title="TravelDNA", page_icon="✈️")
 st.markdown(
     """
     <style>
-        .stApp, .stApp * { direction: rtl; }
+        .stApp { direction: rtl; }
+        .block-container { max-width: 760px; padding-top: 2rem; padding-bottom: 3rem; }
         .stApp p, .stApp label, .stApp h1, .stApp h2, .stApp h3 { text-align: right; }
         .stTextArea textarea { text-align: right; }
+        [data-testid="stSlider"] { direction: ltr; }
+        [data-testid="stSlider"] label { direction: rtl; text-align: right; }
     </style>
     """,
     unsafe_allow_html=True,
@@ -59,8 +62,9 @@ st.caption("בחר בין 1 ל־5 בכל תחום לפי מה שמתאים לך.
 preference_values = {}
 for axis in AXES:
     preference_values[axis] = st.slider(
-        AXIS_LABELS[axis], 1, 5, 3, help=AXIS_ENDPOINTS[axis]
+        AXIS_LABELS[axis], 1, 5, 3
     )
+    st.caption(AXIS_ENDPOINTS[axis])
 
 st.subheader("כמה כל דבר חשוב לך?")
 st.caption("1 = לא משנה לי בכלל | 5 = קריטי לי")
