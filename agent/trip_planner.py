@@ -4,7 +4,7 @@ Trip Planning Agent - הרכיב האחרון בזרימה מה-README:
 
 זה ה-AI האמיתי הראשון בפרויקט (עד כה כל המקורות היו חינמיים/דטרמיניסטיים,
 בלי LLM בכלל) - Gemini עם שני כלים (function calling):
-1. search_knowledge - מחפש ב-rag/retriever.py (Paris/Prague/Vienna בלבד)
+1. search_knowledge - מחפש ב-rag/retriever.py (כל 18 הערים שב-config.CITIES)
 2. estimate_daily_budget - מחשב הערכת תקציב מ-scripts/numbeo_fetcher.py
 
 למה Gemini ולא Claude/OpenAI: יש לו שכבת חינם אמיתית בלי כרטיס אשראי

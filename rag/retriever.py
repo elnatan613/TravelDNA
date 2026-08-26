@@ -1,8 +1,7 @@
 """
 חיפוש סמנטי (retrieval) בבסיס הידע שנבנה ע"י build_knowledge_base.py.
 לא בונה שום דבר - רק טוען את הצ'אנקים/embeddings הקיימים וממיין לפי דמיון
-(cosine similarity) לשאלה. מיועד לשימוש ע"י Trip Planning Agent (TODO,
-עדיין לא קיים) ברגע שיבנה.
+(cosine similarity) לשאלה. מיועד לשימוש ע"י Trip Planning Agent.
 
 שימוש עצמאי:
     python rag/retriever.py "מה יש לראות בפריז?" Paris
@@ -25,11 +24,17 @@ def available_cities() -> list[str]:
     """הערים שיש להן בסיס ידע בפועל (נבנה קבצי chunks+embeddings)."""
     if not os.path.isdir(_KNOWLEDGE_BASE_DIR):
         return []
-    return sorted(
+    chunk_cities = {
         fname[: -len("_chunks.json")]
         for fname in os.listdir(_KNOWLEDGE_BASE_DIR)
         if fname.endswith("_chunks.json")
-    )
+    }
+    embedding_cities = {
+        fname[: -len("_embeddings.npy")]
+        for fname in os.listdir(_KNOWLEDGE_BASE_DIR)
+        if fname.endswith("_embeddings.npy")
+    }
+    return sorted(chunk_cities & embedding_cities)
 
 
 class Retriever:
@@ -52,7 +57,7 @@ class Retriever:
         if not os.path.exists(chunks_path) or not os.path.exists(embeddings_path):
             raise FileNotFoundError(
                 f"אין בסיס ידע (RAG) לעיר '{city}'. ערים קיימות: {available_cities()} "
-                "(הרץ python rag/build_knowledge_base.py כדי לבנות, ותתאם עם config.RAG_CITIES-style list)"
+                "(הרץ python rag/build_knowledge_base.py כדי לבנות לפי config.CITIES)"
             )
 
         with open(chunks_path, encoding="utf-8") as f:

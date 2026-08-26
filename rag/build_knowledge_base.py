@@ -1,6 +1,5 @@
 """
-בונה בסיס ידע (RAG) עמוק לכמה ערים נבחרות (לא כל 18 - זה יקר/מוגזם לשלב הזה),
-לשימוש עתידי ב-Trip Planning Agent (שלב 3 בתכנון - עדיין TODO).
+בונה בסיס ידע (RAG) לכל ערי TravelDNA, לשימוש ב-Trip Planning Agent.
 
 מקור התוכן: Wikivoyage (https://en.wikivoyage.org) - מדריכי טיולים בקוד פתוח
 (רישיון CC BY-SA), עם API רשמי וחינמי דרך MediaWiki - בניגוד ל-Numbeo,
@@ -9,7 +8,8 @@ Wikivoyage *מיועד* לגישה תכנותית כזו, אין כאן שאלת
 (ראו קישור ספציפי לכל עיר ב-ATTRIBUTION_URLS).
 
 איך זה עובד:
-1. שולף את הערך המלא (טקסט רגיל, לא wikitext) מ-Wikivoyage ל-CITIES.
+1. שולף את הערך המלא (טקסט רגיל, לא wikitext) מ-Wikivoyage לכל הערים
+   שמוגדרות ב-config.CITIES (מקור האמת המשותף של הפרויקט).
 2. מפרק לצ'אנקים לפי סקשנים (== Understand ==, == See ==, == Eat == וכו'),
    ומפצל צ'אנקים ארוכים מדי (לפי פרגרפים, ואז לפי משפטים אם צריך).
 3. מחשב embedding מקומי לכל צ'אנק (sentence-transformers - בלי API/מפתח).
@@ -33,12 +33,13 @@ from sentence_transformers import SentenceTransformer
 _PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(_PROJECT_ROOT)
 
+from config import CITIES
+
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
-# ערים נבחרות ל-RAG - לא כל 18 מ-config.CITIES. אלה "case studies" עמוקים,
-# לא עוד ציר/שדה על כל עיר. אם תרצו להוסיף עיר, פשוט הוסיפו לרשימה כאן.
-RAG_CITIES = ["Paris", "Prague", "Vienna"]
+# config.CITIES הוא מקור האמת היחיד, כדי שעיר חדשה לא תישכח ברשימת RAG נפרדת.
+RAG_CITIES = CITIES
 
 WIKIVOYAGE_API_URL = "https://en.wikivoyage.org/w/api.php"
 WIKIVOYAGE_HEADERS = {"User-Agent": "TravelDNA-course-project/1.0 (RAG knowledge base build)"}
@@ -64,7 +65,14 @@ def fetch_wikivoyage_article(title: str) -> str:
     """שולף את הטקסט המלא (בלי wiki-markup) של ערך Wikivoyage."""
     resp = requests.get(
         WIKIVOYAGE_API_URL,
-        params={"action": "query", "titles": title, "prop": "extracts", "explaintext": 1, "format": "json"},
+        params={
+            "action": "query",
+            "titles": title,
+            "prop": "extracts",
+            "explaintext": 1,
+            "redirects": 1,
+            "format": "json",
+        },
         headers=WIKIVOYAGE_HEADERS,
         timeout=20,
     )

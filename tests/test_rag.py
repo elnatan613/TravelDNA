@@ -19,6 +19,7 @@ sys.path.append(_PROJECT_ROOT)
 
 from rag.build_knowledge_base import chunk_article, _split_long_text
 from rag import retriever as retriever_module
+from config import CITIES
 
 
 # ---- chunk_article / _split_long_text - פונקציות טהורות, בלי מודל/רשת ----
@@ -141,8 +142,28 @@ def test_available_cities_empty_dir_returns_empty_list(tmp_path, monkeypatch):
     assert retriever_module.available_cities() == []
 
 
-def test_available_cities_lists_the_real_built_knowledge_base():
-    # בדיקת אינטגרציה קלה - שהבסיס שבנינו בפועל (Paris/Prague/Vienna) קיים
-    # בדיסק. לא טוענת שום מודל, רק בודקת קבצים.
-    cities = retriever_module.available_cities()
-    assert {"Paris", "Prague", "Vienna"}.issubset(set(cities))
+def test_available_cities_ignores_incomplete_file_pairs(tmp_path, monkeypatch):
+    _write_fake_knowledge_base(tmp_path, "CompleteCity", [], [])
+    (tmp_path / "ChunksOnly_chunks.json").write_text("[]", encoding="utf-8")
+    np.save(tmp_path / "EmbeddingsOnly_embeddings.npy", np.array([]))
+    monkeypatch.setattr(retriever_module, "_KNOWLEDGE_BASE_DIR", str(tmp_path))
+
+    assert retriever_module.available_cities() == ["CompleteCity"]
+
+
+def test_real_knowledge_base_covers_all_configured_cities():
+    # בדיקת אינטגרציה קלה: כל עיר שבחוזה המשותף חייבת לכלול גם chunks וגם
+    # embeddings תואמים. לא טוענת את מודל ה-embeddings ולא פונה לרשת.
+    assert set(retriever_module.available_cities()) == set(CITIES)
+
+    for city in CITIES:
+        chunks_path = os.path.join(retriever_module._KNOWLEDGE_BASE_DIR, f"{city}_chunks.json")
+        embeddings_path = os.path.join(retriever_module._KNOWLEDGE_BASE_DIR, f"{city}_embeddings.npy")
+        with open(chunks_path, encoding="utf-8") as f:
+            chunks = json.load(f)
+        embeddings = np.load(embeddings_path, mmap_mode="r")
+
+        assert chunks
+        assert len(chunks) == len(embeddings)
+        assert all(chunk["city"] == city for chunk in chunks)
+        assert all(chunk["source"].startswith("https://en.wikivoyage.org/wiki/") for chunk in chunks)

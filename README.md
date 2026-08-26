@@ -42,7 +42,7 @@
 | `culture`, `nightlife`, `food`, `social`, `activity_density` | [Overpass API](https://overpass-api.de) (OpenStreetMap) | חינמי לגמרי, בלי הרשמה ובלי מפתח. במקור תכננו OpenTripMap, אבל תהליך ההרשמה שלהם קרס בעקביות (שגיאת שרת 500) |
 | `price_sensitivity` | [Numbeo](https://www.numbeo.com) - Cost of Living Index | **נאסף ידנית** (לא סקריפט אוטומטי) מהדף הציבורי - ה-Terms of Use של Numbeo אוסרים scraping אוטומטי בלי אישור כתוב, אבל מתירים שימוש אקדמי עם קרדיט. ה-API הרשמי שלהם בתשלום בלבד ($260+/חודש) |
 | `kosher_availability` | Overpass (OSM) - `religion=jewish` + `diet:kosher=yes` | אותו מקור כמו הצירים למעלה. שקלנו Chabad.org (אין API ציבורי) ו-Google Places API (דורש חשבון עם כרטיס אשראי) ופסלנו את שניהם |
-| בסיס ידע RAG (`rag/knowledge_base/`) | [Wikivoyage](https://en.wikivoyage.org) - מדריכי טיולים | רישיון CC BY-SA, **API רשמי וחינמי** (מיועד לגישה תכנותית, לא כמו Numbeo) - נשלף ל-3 ערים נבחרות בלבד (Paris/Prague/Vienna), לא כל 18. Embeddings מחושבים מקומית (`sentence-transformers`, מודל `all-mpnet-base-v2`) - בלי API/מפתח חיצוני |
+| בסיס ידע RAG (`rag/knowledge_base/`) | [Wikivoyage](https://en.wikivoyage.org) - מדריכי טיולים | רישיון CC BY-SA, **API רשמי וחינמי** (מיועד לגישה תכנותית, לא כמו Numbeo) - נשלף לכל 18 הערים שב-`config.CITIES`. Embeddings מחושבים מקומית (`sentence-transformers`, מודל `all-mpnet-base-v2`) - בלי API/מפתח חיצוני |
 | Trip Planning Agent (`agent/trip_planner.py`) | [Gemini API](https://ai.google.dev) (`gemini-3.5-flash`) | ה-LLM היחיד בפרויקט - יש לו שכבת חינם אמיתית בלי כרטיס אשראי (בדקנו במפורש; ב-Anthropic/OpenAI זה לא המצב). דורש `GEMINI_API_KEY` משלכם (חינמי, אישי - https://aistudio.google.com/apikey) |
 
 הכל (חוץ מ-Numbeo, שהוא טבלה ידנית קבועה בקוד) נשלף מחדש בכל הרצה של
@@ -87,7 +87,7 @@ travel-dna/
 │   ├── demo.py                    # דמו Streamlit שמחבר הכל (תלוי ב-nlp/)
 │   └── try_matching.py            # כלי ניסוי ידני ל-matcher.py - וקטור + kosher constraint, בלי nlp/
 ├── rag/
-│   ├── build_knowledge_base.py    # בונה בסיס ידע מ-Wikivoyage ל-RAG_CITIES (Paris/Prague/Vienna)
+│   ├── build_knowledge_base.py    # בונה בסיס ידע מ-Wikivoyage לכל config.CITIES
 │   ├── retriever.py                # חיפוש סמנטי (cosine similarity) בבסיס הידע שנבנה
 │   └── knowledge_base/             # תוצר: {city}_chunks.json + {city}_embeddings.npy
 ├── agent/
@@ -129,8 +129,8 @@ streamlit run app/demo.py        # דמו מלא, עם התראה אם דאטה 
 # ניסוי ידני במנוע ההתאמה על הדאטה האמיתי (destinations.json) - בלי nlp/ בכלל:
 streamlit run app/try_matching.py
 
-# חיפוש סמנטי בבסיס הידע של RAG (Paris/Prague/Vienna, כבר בנוי ובגיט):
-python rag/retriever.py "best museums to visit" Paris
+# חיפוש סמנטי בבסיס הידע של RAG (כל 18 הערים כבר בנויות ובגיט):
+python rag/retriever.py "modernist architecture by Gaudi" Barcelona
 
 # הסוכן המלא - בונה מסלול יום-יום (דורש GEMINI_API_KEY ב-.env):
 python agent/trip_planner.py Paris 3 500 "loves art and food, not much into nightlife"
@@ -145,7 +145,7 @@ python agent/trip_planner.py Paris 3 500 "loves art and food, not much into nigh
 - [x] ציר `price_sensitivity` (Numbeo Cost of Living Index, נאסף ידנית - לא scraping, ראו scripts/numbeo_fetcher.py)
 - [x] `kosher_availability` לכל עיר (Overpass/OSM - בתי כנסת + diet:kosher, ראו scripts/kashrut_fetcher.py)
 - [x] `matcher.py` מכבד את אילוץ הכשרות בפועל (`requires_kosher` - סינון קשה, לא ציר משוקלל)
-- [x] RAG - בסיס ידע מ-Wikivoyage ל-3 ערים נבחרות (Paris/Prague/Vienna), חיפוש סמנטי מקומי (ראו rag/)
+- [x] RAG - בסיס ידע מ-Wikivoyage לכל 18 הערים שב-`config.CITIES`, חיפוש סמנטי מקומי (ראו rag/)
 - [x] Trip Planning Agent (`agent/trip_planner.py`) - Gemini + function calling, 2 כלים (חיפוש RAG + הערכת תקציב), עובד ונבדק על Paris/3 ימים/500$
 - [ ] חילוץ LLM אמיתי מהטקסט הפתוח - כרגע דמה מחזירה dict ריק
 - [ ] דמו מחובר סופית
