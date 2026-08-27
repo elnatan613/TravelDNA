@@ -84,7 +84,7 @@ travel-dna/
 ├── matching/
 │   └── matcher.py                # מרחק משוקלל + דירוג יעדים (עובד עם דאטה דמה)
 ├── app/
-│   ├── demo.py                    # דמו Streamlit שמחבר הכל (תלוי ב-nlp/)
+│   ├── demo.py                    # דמו מלא: פרופיל, התאמה, RAG וסוכן מסלול
 │   └── try_matching.py            # כלי ניסוי ידני ל-matcher.py - וקטור + kosher constraint, בלי nlp/
 ├── rag/
 │   ├── build_knowledge_base.py    # בונה בסיס ידע מ-Wikivoyage לכל config.CITIES
@@ -148,4 +148,4 @@ python agent/trip_planner.py Paris 3 500 "loves art and food, not much into nigh
 - [x] RAG - בסיס ידע מ-Wikivoyage לכל 18 הערים שב-`config.CITIES`, חיפוש סמנטי מקומי (ראו rag/)
 - [x] Trip Planning Agent (`agent/trip_planner.py`) - Gemini + function calling, 2 כלים (חיפוש RAG + הערכת תקציב), עובד ונבדק על Paris/3 ימים/500$
 - [ ] חילוץ LLM אמיתי מהטקסט הפתוח - כרגע דמה מחזירה dict ריק
-- [ ] דמו מחובר סופית
+- [x] דמו מחובר סופית - בחירת יעד מומלץ, ימים ותקציב מפעילה RAG + Agent למסלול אישי

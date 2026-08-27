@@ -1,6 +1,6 @@
 """
-דמו בסיסי ב-Streamlit - מחבר בין חלק ה-NLP לחלק ההתאמה.
-זה השלד שמאפשר לבדוק end-to-end מוקדם, גם עם ערכי דמה בשני הצדדים.
+דמו Streamlit שמחבר את כל זרימת TravelDNA:
+שאלון וטקסט חופשי -> פרופיל -> התאמת יעד -> RAG + Agent -> מסלול אישי.
 
 הרצה: streamlit run app/demo.py
 """
@@ -35,6 +35,24 @@ AXIS_ENDPOINTS = {
     "food": "1 = לא מרכזי | 5 = חשוב מאוד",
     "price_sensitivity": "1 = פתוח ליוקרה | 5 = חשוב לחסוך",
 }
+
+
+def _traveler_preferences_for_agent(profile: dict, open_text: str) -> str:
+    """ממיר את הפרופיל והטקסט החופשי לתיאור קצר שהסוכן יכול לצרוך."""
+    scores = ", ".join(f"{axis}={profile[axis]:.2f}" for axis in AXES)
+    summary = f"TravelDNA preference scores (0=low, 1=high): {scores}."
+    if open_text.strip():
+        summary += f" Traveler notes: {open_text.strip()}"
+    return summary
+
+
+@st.cache_resource(show_spinner=False)
+def _get_trip_planning_agent():
+    """טוען את מודל ה-embeddings והסוכן פעם אחת בלבד לכל תהליך של הדמו."""
+    from agent.trip_planner import TripPlanningAgent
+
+    return TripPlanningAgent()
+
 
 st.set_page_config(page_title="TravelDNA", page_icon="✈️")
 st.markdown(
@@ -96,14 +114,74 @@ if st.button("מצא לי יעד"):
         results = rank_destinations(
             profile, weights, destinations, requires_kosher=requires_kosher
         )
-        st.subheader("היעדים המומלצים בשבילך:")
         if not results:
+            st.session_state["recommendations"] = []
+            st.session_state.pop("itinerary", None)
             st.info("לא נמצאו יעדים שעומדים בדרישת הכשרות שבחרת.")
-
-        max_distance = math.sqrt(sum(weights.values()))
-        for r in results[:5]:
-            match_percent = round(100 * max(0, 1 - r["distance"] / max_distance))
-            st.write(
-                f"**{r['city']}** ({r.get('country', '')}) — "
-                f"ציון התאמה: {match_percent}%"
+        else:
+            max_distance = math.sqrt(sum(weights.values()))
+            st.session_state["recommendations"] = [
+                {
+                    **result,
+                    "match_percent": round(
+                        100 * max(0, 1 - result["distance"] / max_distance)
+                    ),
+                }
+                for result in results[:5]
+            ]
+            st.session_state["traveler_preferences"] = _traveler_preferences_for_agent(
+                profile, open_text
             )
+            st.session_state.pop("itinerary", None)
+
+
+recommendations = st.session_state.get("recommendations", [])
+if recommendations:
+    st.subheader("היעדים המומלצים בשבילך:")
+    for result in recommendations:
+        st.write(
+            f"**{result['city']}** ({result.get('country', '')}) — "
+            f"ציון התאמה: {result['match_percent']}%"
+        )
+
+    st.divider()
+    st.subheader("בנה מסלול אישי")
+    st.caption("בחר יעד מתוך ההמלצות והגדר את מסגרת הטיול.")
+
+    with st.form("trip_planner_form"):
+        selected_city = st.selectbox(
+            "יעד",
+            options=[result["city"] for result in recommendations],
+        )
+        days = st.number_input("מספר ימים", min_value=1, max_value=14, value=3)
+        budget = st.number_input(
+            "תקציב כולל בדולר (ללא טיסות ולינה)",
+            min_value=50,
+            max_value=20_000,
+            value=500,
+            step=50,
+        )
+        build_itinerary = st.form_submit_button("בנה לי מסלול")
+
+    if build_itinerary:
+        try:
+            with st.spinner("בונה מסלול מותאם אישית..."):
+                agent = _get_trip_planning_agent()
+                itinerary = agent.plan_trip(
+                    selected_city,
+                    days=int(days),
+                    budget_total_usd=float(budget),
+                    preferences=st.session_state.get("traveler_preferences", ""),
+                )
+        except Exception as error:
+            st.error(f"לא ניתן לבנות כרגע את המסלול: {error}")
+        else:
+            st.session_state["itinerary"] = {
+                "city": selected_city,
+                "text": itinerary,
+            }
+
+    saved_itinerary = st.session_state.get("itinerary")
+    if saved_itinerary:
+        st.subheader(f"המסלול שלך ל־{saved_itinerary['city']}")
+        st.markdown(saved_itinerary["text"])
