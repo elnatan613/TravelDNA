@@ -36,8 +36,18 @@ def test_init_raises_without_api_key():
 def test_search_knowledge_formats_results():
     fake_retriever = mock.Mock()
     fake_retriever.retrieve.return_value = [
-        {"section": "See", "text": "The Louvre is a great museum.", "score": 0.8},
-        {"section": "Eat", "text": "Try the local bistros.", "score": 0.6},
+        {
+            "section": "See",
+            "text": "The Louvre is a great museum.",
+            "source": "https://en.wikivoyage.org/wiki/Paris",
+            "score": 0.8,
+        },
+        {
+            "section": "Eat",
+            "text": "Try the local bistros.",
+            "source": "https://en.wikivoyage.org/wiki/Paris",
+            "score": 0.6,
+        },
     ]
     agent = _make_agent(retriever=fake_retriever)
 
@@ -45,6 +55,7 @@ def test_search_knowledge_formats_results():
 
     assert "[See] The Louvre is a great museum." in result
     assert "[Eat] Try the local bistros." in result
+    assert "Source: https://en.wikivoyage.org/wiki/Paris" in result
     fake_retriever.retrieve.assert_called_once_with("museums", "Paris", top_k=4)
 
 
@@ -108,5 +119,8 @@ def test_plan_trip_supported_city_calls_llm_with_tools():
     create_kwargs = fake_client.chats.create.call_args.kwargs
     tool_names = {tool.__name__ for tool in create_kwargs["config"].tools}
     assert tool_names == {"search_knowledge", "estimate_daily_budget"}
+    system_instruction = create_kwargs["config"].system_instruction
+    assert "Hebrew" in system_instruction
+    assert "מקורות" in system_instruction
     sent_prompt = fake_chat.send_message.call_args.args[0]
     assert "Paris" in sent_prompt and "2-day" in sent_prompt and "300" in sent_prompt

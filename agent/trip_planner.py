@@ -57,6 +57,9 @@ GEMINI_MODEL = "gemini-3.5-flash"
 
 SYSTEM_INSTRUCTION = """You are a trip-planning assistant for the TravelDNA app.
 
+Write the entire final response in Hebrew. English may appear only in proper
+nouns and source URLs.
+
 You have two tools:
 - search_knowledge: semantic search over a curated travel guide for one city.
   Call it several times with different focused queries (e.g. "top attractions",
@@ -75,6 +78,8 @@ When you write the day-by-day itinerary:
   didn't come from a tool result.
 - Structure the answer as one section per day.
 - Keep it concise and practical, not flowery.
+- End with a "מקורות" section that lists the unique source URLs returned by
+  search_knowledge. Never invent or alter a source URL.
 """
 
 
@@ -111,7 +116,11 @@ class TripPlanningAgent:
             return f"No knowledge base for '{city}'. Available cities: {available_cities()}"
         if not results:
             return "No relevant information found for this query."
-        return "\n\n".join(f"[{r['section']}] {r['text']}" for r in results)
+        return "\n\n".join(
+            f"[{result['section']}] {result['text']}"
+            + (f"\nSource: {result['source']}" if result.get("source") else "")
+            for result in results
+        )
 
     def estimate_daily_budget(self, city: str) -> str:
         """Estimate a rough average daily cost in USD for a tourist in a city

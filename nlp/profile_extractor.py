@@ -151,6 +151,9 @@ def extract_adjustments_from_text(open_text: str) -> dict:
         contents=prompt,
         config={
             "response_mime_type": "application/json",
+            # זו קריאת structured-output חד-פעמית ללא כלים. כיבוי AFC מונע
+            # מה-SDK להפעיל לולאת function-calling מיותרת ולהציג אזהרה.
+            "automatic_function_calling": {"disable": True},
         },
     )
 

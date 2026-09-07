@@ -110,7 +110,8 @@ pip install -r requirements.txt
   - חינמי, בלי כרטיס אשראי, עם חשבון Google אישי (לא קשור לחשבון ארגוני
     של מקום עבודה - זה API אחר ונפרד, גם אם דומה בשם)
 
-הכי פשוט: קובץ `.env` בשורש הפרויקט (כבר ב-`.gitignore`, לא נכנס לגיט):
+העתיקו את `.env.example` לקובץ `.env` בשורש הפרויקט ומלאו את הערכים שלכם.
+הקובץ `.env` כבר ב-`.gitignore` ולא נכנס ל-Git:
 ```
 GEONAMES_USERNAME=your_username
 GEMINI_API_KEY=your_key
@@ -119,11 +120,11 @@ GEMINI_API_KEY=your_key
 סביבה שהוגדרו כך נראים רק לתהליכים/טרמינלים *חדשים* שנפתחו אחרי ה-setx,
 לא לתהליכים שכבר היו פתוחים)
 
-## הרצה מהירה (עם דאטה דמה, בלי לחכות לשום API)
+## הרצה ובדיקות ידניות
 
 ```bash
 python matching/matcher.py       # בודק את מנוע ההתאמה על נתוני דוגמה
-python nlp/profile_extractor.py  # בודק את בניית הפרופיל (rule-based + דמה ל-LLM)
+python nlp/profile_extractor.py  # בודק את בניית הפרופיל (טקסט חופשי דורש GEMINI_API_KEY)
 streamlit run app/demo.py        # דמו מלא, עם התראה אם דאטה חסר
 
 # ניסוי ידני במנוע ההתאמה על הדאטה האמיתי (destinations.json) - בלי nlp/ בכלל:
@@ -147,5 +148,5 @@ python agent/trip_planner.py Paris 3 500 "loves art and food, not much into nigh
 - [x] `matcher.py` מכבד את אילוץ הכשרות בפועל (`requires_kosher` - סינון קשה, לא ציר משוקלל)
 - [x] RAG - בסיס ידע מ-Wikivoyage לכל 18 הערים שב-`config.CITIES`, חיפוש סמנטי מקומי (ראו rag/)
 - [x] Trip Planning Agent (`agent/trip_planner.py`) - Gemini + function calling, 2 כלים (חיפוש RAG + הערכת תקציב), עובד ונבדק על Paris/3 ימים/500$
-- [ ] חילוץ LLM אמיתי מהטקסט הפתוח - כרגע דמה מחזירה dict ריק
+- [x] חילוץ LLM אמיתי מהטקסט הפתוח באמצעות Gemini, עם validation/clamping
 - [x] דמו מחובר סופית - בחירת יעד מומלץ, ימים ותקציב מפעילה RAG + Agent למסלול אישי
