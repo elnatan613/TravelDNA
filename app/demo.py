@@ -55,10 +55,36 @@ COUNTRY_LABELS_HE = {
     "Greece": "יוון",
 }
 
+CITY_LABELS_HE = {
+    "Paris": "פריז",
+    "Barcelona": "ברצלונה",
+    "Amsterdam": "אמסטרדם",
+    "Prague": "פראג",
+    "Vienna": "וינה",
+    "Reykjavik": "רייקיאוויק",
+    "Lisbon": "ליסבון",
+    "Budapest": "בודפשט",
+    "Krakow": "קרקוב",
+    "Berlin": "ברלין",
+    "Rome": "רומא",
+    "Florence": "פירנצה",
+    "Copenhagen": "קופנהגן",
+    "Stockholm": "סטוקהולם",
+    "Dublin": "דבלין",
+    "Edinburgh": "אדינבורו",
+    "Athens": "אתונה",
+    "Porto": "פורטו",
+}
+
 
 def _country_label(country: str) -> str:
     """מחזיר שם מדינה בעברית, עם fallback בטוח לערך המקורי."""
     return COUNTRY_LABELS_HE.get(country, country)
+
+
+def _city_label(city: str) -> str:
+    """מחזיר שם עיר בעברית בלי לשנות את המזהה האנגלי שמשמש את ה-RAG."""
+    return CITY_LABELS_HE.get(city, city)
 
 
 def _traveler_preferences_for_agent(profile: dict, open_text: str) -> str:
@@ -163,9 +189,10 @@ recommendations = st.session_state.get("recommendations", [])
 if recommendations:
     st.subheader("היעדים המומלצים בשבילך:")
     for result in recommendations:
+        city = _city_label(result["city"])
         country = _country_label(result.get("country", ""))
         st.write(
-            f"**{result['city']}** ({country}) — "
+            f"**{city}** ({country}) — "
             f"ציון התאמה: {result['match_percent']}%"
         )
 
@@ -177,6 +204,7 @@ if recommendations:
         selected_city = st.selectbox(
             "יעד",
             options=[result["city"] for result in recommendations],
+            format_func=_city_label,
         )
         days = st.number_input("מספר ימים", min_value=1, max_value=14, value=3)
         budget = st.number_input(
@@ -208,5 +236,5 @@ if recommendations:
 
     saved_itinerary = st.session_state.get("itinerary")
     if saved_itinerary:
-        st.subheader(f"המסלול שלך ל־{saved_itinerary['city']}")
+        st.subheader(f"המסלול שלך ל־{_city_label(saved_itinerary['city'])}")
         st.markdown(saved_itinerary["text"])

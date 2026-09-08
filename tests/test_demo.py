@@ -23,9 +23,12 @@ def test_demo_recommendation_to_itinerary_flow():
         assert app.selectbox[0].label == "יעד"
         assert len(app.selectbox[0].options) == 5
         recommendation_text = "\n".join(element.value for element in app.markdown)
-        assert "(צ'כיה)" in recommendation_text
-        assert "(איטליה)" in recommendation_text
-        assert "(הונגריה)" in recommendation_text
+        assert "**פראג** (צ'כיה)" in recommendation_text
+        assert "**רומא** (איטליה)" in recommendation_text
+        assert "**בודפשט** (הונגריה)" in recommendation_text
+        assert "**Prague**" not in recommendation_text
+        assert "**Rome**" not in recommendation_text
+        assert "**Budapest**" not in recommendation_text
         assert "(Czechia)" not in recommendation_text
         assert "(Italy)" not in recommendation_text
         assert "(Hungary)" not in recommendation_text
