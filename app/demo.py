@@ -36,6 +36,30 @@ AXIS_ENDPOINTS = {
     "price_sensitivity": "1 = פתוח ליוקרה | 5 = חשוב לחסוך",
 }
 
+COUNTRY_LABELS_HE = {
+    "France": "צרפת",
+    "Spain": "ספרד",
+    "The Netherlands": "הולנד",
+    "Czechia": "צ'כיה",
+    "Austria": "אוסטריה",
+    "Iceland": "איסלנד",
+    "Portugal": "פורטוגל",
+    "Hungary": "הונגריה",
+    "Poland": "פולין",
+    "Germany": "גרמניה",
+    "Italy": "איטליה",
+    "Denmark": "דנמרק",
+    "Sweden": "שוודיה",
+    "Ireland": "אירלנד",
+    "United Kingdom": "בריטניה",
+    "Greece": "יוון",
+}
+
+
+def _country_label(country: str) -> str:
+    """מחזיר שם מדינה בעברית, עם fallback בטוח לערך המקורי."""
+    return COUNTRY_LABELS_HE.get(country, country)
+
 
 def _traveler_preferences_for_agent(profile: dict, open_text: str) -> str:
     """ממיר את הפרופיל והטקסט החופשי לתיאור קצר שהסוכן יכול לצרוך."""
@@ -139,8 +163,9 @@ recommendations = st.session_state.get("recommendations", [])
 if recommendations:
     st.subheader("היעדים המומלצים בשבילך:")
     for result in recommendations:
+        country = _country_label(result.get("country", ""))
         st.write(
-            f"**{result['city']}** ({result.get('country', '')}) — "
+            f"**{result['city']}** ({country}) — "
             f"ציון התאמה: {result['match_percent']}%"
         )
 
