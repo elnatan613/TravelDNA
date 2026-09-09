@@ -124,3 +124,30 @@ def test_plan_trip_supported_city_calls_llm_with_tools():
     assert "מקורות" in system_instruction
     sent_prompt = fake_chat.send_message.call_args.args[0]
     assert "Paris" in sent_prompt and "2-day" in sent_prompt and "300" in sent_prompt
+
+
+def test_client_retries_overload_at_http_level():
+    with mock.patch("agent.trip_planner.genai.Client") as client:
+        TripPlanningAgent(api_key="test", retriever=mock.Mock())
+    options = client.call_args.kwargs["http_options"]
+    assert options.retry_options.attempts == 3
+    assert options.retry_options.http_status_codes == [503]
+    assert options.timeout == 60_000
+
+
+@pytest.mark.parametrize("code", [503, 400, 403])
+def test_provider_errors_are_classified(code):
+    from google.genai.errors import APIError
+    from agent.trip_planner import TripServiceUnavailable
+
+    agent = _make_agent()
+    error = APIError(code, {"error": {"message": "provider details", "code": code}})
+    agent.client.chats.create.return_value.send_message.side_effect = error
+    with mock.patch("agent.trip_planner.available_cities", return_value=["Paris"]):
+        with pytest.raises(TripServiceUnavailable if code == 503 else APIError) as caught:
+            agent.plan_trip("Paris", 3, 500)
+    if code == 503:
+        assert "provider details" not in str(caught.value)
+        assert "עמוס" in str(caught.value)
+    else:
+        assert caught.value is error

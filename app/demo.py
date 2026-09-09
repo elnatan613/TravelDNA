@@ -8,6 +8,7 @@
 import sys
 import os
 import math
+import logging
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -217,8 +218,10 @@ if recommendations:
         build_itinerary = st.form_submit_button("בנה לי מסלול")
 
     if build_itinerary:
+        from agent.trip_planner import TripServiceUnavailable
+
         try:
-            with st.spinner("בונה מסלול מותאם אישית..."):
+            with st.spinner("בונה מסלול מותאם אישית... בזמן עומס הבקשה תנסה שוב אוטומטית."):
                 agent = _get_trip_planning_agent()
                 itinerary = agent.plan_trip(
                     selected_city,
@@ -226,8 +229,11 @@ if recommendations:
                     budget_total_usd=float(budget),
                     preferences=st.session_state.get("traveler_preferences", ""),
                 )
-        except Exception as error:
-            st.error(f"לא ניתן לבנות כרגע את המסלול: {error}")
+        except TripServiceUnavailable as error:
+            st.warning(str(error))
+        except Exception:
+            logging.getLogger(__name__).exception("Trip planning failed")
+            st.error("לא ניתן לבנות כרגע את המסלול. אפשר לנסות שוב בעוד כמה דקות.")
         else:
             st.session_state["itinerary"] = {
                 "city": selected_city,

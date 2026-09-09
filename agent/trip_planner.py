@@ -31,7 +31,7 @@ if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 from google import genai
-from google.genai import types
+from google.genai import types, errors
 
 from rag.retriever import Retriever, available_cities
 from numbeo_fetcher import estimate_daily_cost_usd
@@ -83,6 +83,10 @@ When you write the day-by-day itinerary:
 """
 
 
+class TripServiceUnavailable(RuntimeError):
+    """The provider remains unavailable after bounded HTTP retries."""
+
+
 class TripPlanningAgent:
     """
     עוטף client של Gemini + שני הכלים, וחושף plan_trip() כפעולה אחת.
@@ -97,7 +101,16 @@ class TripPlanningAgent:
                 "אין GEMINI_API_KEY - הגדר אותו ב-.env בשורש הפרויקט "
                 "(ראו https://aistudio.google.com/apikey לקבלת מפתח חינמי)"
             )
-        self.client = genai.Client(api_key=resolved_key)
+        self.client = genai.Client(
+            api_key=resolved_key,
+            http_options=types.HttpOptions(
+                timeout=60_000,
+                retry_options=types.HttpRetryOptions(
+                    attempts=3, initial_delay=2, max_delay=8,
+                    http_status_codes=[503],
+                ),
+            ),
+        )
         self.model = model
         self.retriever = retriever or Retriever()
 
@@ -159,7 +172,16 @@ class TripPlanningAgent:
             f"Total budget: ${budget_total_usd} USD (excluding flights and accommodation). "
             f"Traveler preferences: {preferences or 'none given - keep it well-rounded'}."
         )
-        response = chat.send_message(prompt)
+        try:
+            response = chat.send_message(prompt)
+        except errors.APIError as error:
+            if error.code == 503:
+                raise TripServiceUnavailable(
+                    "שירות בניית המסלולים עמוס כרגע. גם לאחר ניסיונות חוזרים "
+                    "לא התקבלה תשובה. ההעדפות שלך נשמרו; אפשר ללחוץ שוב "
+                    "על ״בנה לי מסלול״ בעוד כמה דקות."
+                ) from error
+            raise
         return response.text
 
 
