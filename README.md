@@ -43,7 +43,7 @@
 | `price_sensitivity` | [Numbeo](https://www.numbeo.com) - Cost of Living Index | **נאסף ידנית** (לא סקריפט אוטומטי) מהדף הציבורי - ה-Terms of Use של Numbeo אוסרים scraping אוטומטי בלי אישור כתוב, אבל מתירים שימוש אקדמי עם קרדיט. ה-API הרשמי שלהם בתשלום בלבד ($260+/חודש) |
 | `kosher_availability` | Overpass (OSM) - `religion=jewish` + `diet:kosher=yes` | אותו מקור כמו הצירים למעלה. שקלנו Chabad.org (אין API ציבורי) ו-Google Places API (דורש חשבון עם כרטיס אשראי) ופסלנו את שניהם |
 | בסיס ידע RAG (`rag/knowledge_base/`) | [Wikivoyage](https://en.wikivoyage.org) - מדריכי טיולים | רישיון CC BY-SA, **API רשמי וחינמי** (מיועד לגישה תכנותית, לא כמו Numbeo) - נשלף לכל 18 הערים שב-`config.CITIES`. Embeddings מחושבים מקומית (`sentence-transformers`, מודל `all-mpnet-base-v2`) - בלי API/מפתח חיצוני |
-| Trip Planning Agent (`agent/trip_planner.py`) | [Gemini API](https://ai.google.dev) (`gemini-3.5-flash`) | ה-LLM היחיד בפרויקט - יש לו שכבת חינם אמיתית בלי כרטיס אשראי (בדקנו במפורש; ב-Anthropic/OpenAI זה לא המצב). דורש `GEMINI_API_KEY` משלכם (חינמי, אישי - https://aistudio.google.com/apikey) |
+| Trip Planning Agent (`agent/trip_planner.py`) | [Gemini API](https://ai.google.dev) (`gemini-2.5-flash`) | דורש `GEMINI_API_KEY` משלכם. זמינות ומכסות תלויות במודל ובחשבון. מודל חילוץ הפרופיל מוגדר בנפרד ב־`nlp/`. |
 
 הכל (חוץ מ-Numbeo, שהוא טבלה ידנית קבועה בקוד) נשלף מחדש בכל הרצה של
 `python scripts/destination_scraper.py`, ומיוצא ל-`data/processed/destinations.json`

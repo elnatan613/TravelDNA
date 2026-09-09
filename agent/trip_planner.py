@@ -53,7 +53,7 @@ def _load_dotenv_file(path):
 
 _load_dotenv_file(os.path.join(_PROJECT_ROOT, ".env"))
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
-GEMINI_MODEL = "gemini-3.5-flash"
+GEMINI_MODEL = "gemini-2.5-flash"
 
 SYSTEM_INSTRUCTION = """You are a trip-planning assistant for the TravelDNA app.
 
