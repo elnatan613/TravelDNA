@@ -106,7 +106,7 @@ def test_plan_trip_unsupported_city_short_circuits_without_calling_llm():
 def test_plan_trip_supported_city_calls_llm_with_tools():
     fake_client = mock.Mock()
     fake_chat = mock.Mock()
-    fake_chat.send_message.return_value.text = "a fake itinerary"
+    fake_chat.send_message.return_value.text = "מסלול לדוגמה"
     fake_client.chats.create.return_value = fake_chat
 
     agent = _make_agent()
@@ -115,7 +115,7 @@ def test_plan_trip_supported_city_calls_llm_with_tools():
     with mock.patch("agent.trip_planner.available_cities", return_value=["Paris", "Prague", "Vienna"]):
         result = agent.plan_trip("Paris", days=2, budget_total_usd=300, preferences="loves food")
 
-    assert result == "a fake itinerary"
+    assert result == "מסלול לדוגמה"
     create_kwargs = fake_client.chats.create.call_args.kwargs
     tool_names = {tool.__name__ for tool in create_kwargs["config"].tools}
     assert tool_names == {"search_knowledge", "estimate_daily_budget"}
@@ -133,6 +133,19 @@ def test_client_retries_overload_at_http_level():
     assert options.retry_options.attempts == 3
     assert options.retry_options.http_status_codes == [503]
     assert options.timeout == 60_000
+
+
+def test_foreign_names_are_rewritten_but_source_urls_are_allowed():
+    agent = _make_agent()
+    chat = agent.client.chats.create.return_value
+    chat.send_message.side_effect = [
+        mock.Mock(text="בקרו ב-Porto"),
+        mock.Mock(text="בקרו בפורטו\nhttps://en.wikivoyage.org/wiki/Porto"),
+    ]
+    with mock.patch("agent.trip_planner.available_cities", return_value=["Porto"]):
+        result = agent.plan_trip("Porto", 1, 150)
+    assert "בקרו בפורטו" in result
+    assert chat.send_message.call_count == 2
 
 
 @pytest.mark.parametrize("code", [503, 400, 403])

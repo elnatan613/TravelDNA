@@ -15,6 +15,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import streamlit as st
 from config import AXES
 from app.city_backgrounds import CITY_BACKGROUNDS
+from app.itinerary_formatting import format_itinerary
 from nlp.profile_extractor import build_travel_profile, extract_importance_weights
 from matching.matcher import rank_destinations, load_destinations
 
@@ -233,7 +234,7 @@ if recommendations:
         from agent.trip_planner import TripServiceUnavailable
 
         try:
-            with st.spinner("בונה מסלול מותאם אישית... בזמן עומס הבקשה תנסה שוב אוטומטית."):
+            with st.spinner("מחפש מידע ומרכיב מסלול אישי. הפעולה עשויה להימשך כדקה ואף יותר."):
                 agent = _get_trip_planning_agent()
                 itinerary = agent.plan_trip(
                     selected_city,
@@ -255,4 +256,4 @@ if recommendations:
     saved_itinerary = st.session_state.get("itinerary")
     if saved_itinerary:
         st.subheader(f"המסלול שלך ל־{_city_label(saved_itinerary['city'])}")
-        st.markdown(saved_itinerary["text"])
+        st.markdown(format_itinerary(saved_itinerary["text"]))

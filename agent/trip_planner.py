@@ -21,6 +21,7 @@ Trip Planning Agent - הרכיב האחרון בזרימה מה-README:
 
 import os
 import sys
+import re
 
 _PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 _SCRIPTS_DIR = os.path.join(_PROJECT_ROOT, "scripts")
@@ -57,8 +58,12 @@ GEMINI_MODEL = "gemini-2.5-flash"
 
 SYSTEM_INSTRUCTION = """You are a trip-planning assistant for the TravelDNA app.
 
-Write the entire final response in Hebrew. English may appear only in proper
-nouns and source URLs.
+Write the entire final response in Hebrew, including headings, place names,
+attraction names and currency names. Transliterate foreign proper nouns into
+Hebrew when needed; do not append their English spelling in parentheses.
+Only source URLs may contain Latin letters. Preserve source URLs exactly.
+Write monetary amounts as numbers followed by Hebrew currency names, for
+example "500 דולר" or "40 אירו". Do not use dollar signs or LaTeX math.
 
 You have two tools:
 - search_knowledge: semantic search over a curated travel guide for one city.
@@ -174,6 +179,19 @@ class TripPlanningAgent:
         )
         try:
             response = chat.send_message(prompt)
+            def has_foreign_text(text):
+                prose = re.sub(r"https?://[^\s<>]+", "", text or "")
+                return bool(re.search(r"[A-Za-zÀ-ž]", prose))
+
+            if has_foreign_text(response.text):
+                response = chat.send_message(
+                    "תקן את התשובה האחרונה לעברית בלבד. תעתק לעברית כל שם "
+                    "של אתר, מסעדה או יישומון. הסר שמות לועזיים בסוגריים. "
+                    "שמור על כל העובדות, הסכומים והקישורים ללא שינוי. "
+                    "אל תקרא לכלים נוספים. החזר רק את המסלול המתוקן."
+                )
+            if not response.text or has_foreign_text(response.text):
+                raise RuntimeError("The itinerary did not pass Hebrew output validation")
         except errors.APIError as error:
             if error.code == 503:
                 raise TripServiceUnavailable(

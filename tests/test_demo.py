@@ -61,3 +61,15 @@ def test_demo_recommendation_to_itinerary_flow():
     assert call.kwargs["budget_total_usd"] == 500.0
     assert "TravelDNA preference scores" in call.kwargs["preferences"]
     assert any("Test itinerary" in element.value for element in app.markdown)
+
+
+def test_saved_itinerary_currency_is_fixed_without_regeneration():
+    app = AppTest.from_file(_DEMO_PATH).run(timeout=20)
+    app.button[0].click().run(timeout=20)
+    app.session_state["itinerary"] = {
+        "city": app.selectbox[0].value,
+        "text": "תקציב $500 לשלושה ימים, $75.9 ליום.",
+    }
+    app.run(timeout=20)
+    assert not app.exception
+    assert any(r"תקציב \$500 לשלושה ימים, \$75.9 ליום." == item.value for item in app.markdown)
