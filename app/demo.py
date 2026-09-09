@@ -14,6 +14,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import streamlit as st
 from config import AXES
+from app.city_backgrounds import CITY_BACKGROUNDS
 from nlp.profile_extractor import build_travel_profile, extract_importance_weights
 from matching.matcher import rank_destinations, load_destinations
 
@@ -201,12 +202,23 @@ if recommendations:
     st.subheader("בנה מסלול אישי")
     st.caption("בחר יעד מתוך ההמלצות והגדר את מסגרת הטיול.")
 
+    selected_city = st.selectbox(
+        "יעד",
+        options=[result["city"] for result in recommendations],
+        format_func=_city_label,
+    )
+    background = CITY_BACKGROUNDS.get(selected_city)
+    if background:
+        with st.container(border=True):
+            st.subheader(f"קצת על {_city_label(selected_city)}")
+            st.write(background)
+            st.caption(
+                f"תקציר מעובד בעברית על בסיס [מדריך העיר בוויקימסע]"
+                f"(https://en.wikivoyage.org/wiki/{selected_city}), מאת תורמי ויקימסע. "
+                "[רישיון שיתוף וייחוס](https://creativecommons.org/licenses/by-sa/4.0/)"
+            )
+
     with st.form("trip_planner_form"):
-        selected_city = st.selectbox(
-            "יעד",
-            options=[result["city"] for result in recommendations],
-            format_func=_city_label,
-        )
         days = st.number_input("מספר ימים", min_value=1, max_value=14, value=3)
         budget = st.number_input(
             "תקציב כולל בדולר (ללא טיסות ולינה)",

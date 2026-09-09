@@ -10,6 +10,23 @@ _PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 _DEMO_PATH = os.path.join(_PROJECT_ROOT, "app", "demo.py")
 
 
+def test_background_covers_every_city_and_changes_before_submission():
+    from app.city_backgrounds import CITY_BACKGROUNDS
+    from config import CITIES
+
+    assert set(CITY_BACKGROUNDS) == set(CITIES)
+    app = AppTest.from_file(_DEMO_PATH).run(timeout=20)
+    app.button[0].click().run(timeout=20)
+    first_city = app.selectbox[0].value
+    assert any(CITY_BACKGROUNDS[first_city] == item.value for item in app.markdown)
+    other_city = next(r["city"] for r in app.session_state["recommendations"] if r["city"] != first_city)
+    app.selectbox[0].select(other_city).run(timeout=20)
+    assert not app.exception
+    assert any(CITY_BACKGROUNDS[other_city] == item.value for item in app.markdown)
+    assert not any(CITY_BACKGROUNDS[first_city] == item.value for item in app.markdown)
+    assert "itinerary" not in app.session_state
+
+
 def test_demo_recommendation_to_itinerary_flow():
     fake_agent = mock.Mock()
     fake_agent.plan_trip.return_value = "## Day 1\nTest itinerary"

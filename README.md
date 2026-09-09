@@ -139,6 +139,11 @@ python agent/trip_planner.py Paris 3 500 "loves art and food, not much into nigh
 
 ## סטטוס נוכחי
 
+בחירת יעד בדמו מציגה מיד רקע קצר בעברית לכל אחת מ־18 הערים, לפני בניית
+המסלול. התקצירים ב־`app/city_backgrounds.py` נערכו על בסיס פסקאות הפתיחה
+במדריכי Wikivoyage השמורים ב־RAG, עם ייחוס וקישור למקור ולרישיון CC BY-SA 4.0.
+הצגת הרקע אינה דורשת Gemini או חיבור לרשת.
+
 - [x] מבנה פרויקט + config משותף עם 7 הצירים המדודים
 - [x] מנוע התאמה (מרחק משוקלל) - עובד
 - [x] שלד NLP: rule-based mapping לשאלות סגורות + validation/clamping - עובד
