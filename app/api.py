@@ -55,6 +55,12 @@ def cities():
              "background": CITY_BACKGROUNDS.get(d["city"], "")} for d in destinations()]
 
 
+@app.get("/health")
+def health():
+    """A lightweight endpoint for the hosting platform health check."""
+    return {"status": "ok"}
+
+
 @app.post("/api/match")
 def match(request: MatchRequest):
     from nlp.profile_extractor import build_travel_profile, extract_importance_weights
