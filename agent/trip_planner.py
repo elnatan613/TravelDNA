@@ -55,7 +55,7 @@ def _load_dotenv_file(path):
 _load_dotenv_file(os.path.join(_PROJECT_ROOT, ".env"))
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
 GEMINI_MODEL = "gemini-2.5-flash"
-GEMINI_FALLBACK_MODEL = "gemini-2.5-flash-lite"
+GEMINI_FALLBACK_MODEL = "gemini-3.5-flash-lite"
 
 SYSTEM_INSTRUCTION = """You are a trip-planning assistant for the TravelDNA app.
 
@@ -201,7 +201,9 @@ class TripPlanningAgent:
                 self.active_model = model
                 return response.text
             except errors.APIError as error:
-                if error.code in {429, 503}:
+                # A retired secondary model must not turn a temporary quota
+                # issue into a public 503. Move on to the basic itinerary.
+                if error.code in {429, 503} or model != self.model:
                     last_provider_error = error
                     continue
                 raise

@@ -109,7 +109,8 @@ def interpret_notes(notes):
     )
     from google.genai import errors
     last_error = None
-    for model in ("gemini-2.5-flash", "gemini-2.5-flash-lite"):
+    primary_model = "gemini-2.5-flash"
+    for model in (primary_model, "gemini-3.5-flash-lite"):
         try:
             response = client.models.generate_content(
                 model=model, contents=prompt,
@@ -117,7 +118,7 @@ def interpret_notes(notes):
             )
             return NotesInterpretation.model_validate_json(response.text)
         except errors.APIError as error:
-            if error.code in {429, 503}:
+            if error.code in {429, 503} or model != primary_model:
                 last_error = error
                 continue
             raise
