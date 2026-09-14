@@ -1,6 +1,6 @@
 # פריסה ל־Railway
 
-הפרויקט מוכן לפריסה כשירות אחד: FastAPI מגיש את ה־API ואת קבצי ה־React שנבנים בתוך ה־Docker image.
+הפרויקט מוכן לפריסה כשירות אחד: FastAPI מגיש את ה־API ואת קבצי ה־React שנבנים בתוך ה־Docker image. קובץ ה־Docker משתמש ב־`requirements.production.txt`, שמכיל רק את החבילות הנדרשות לשרת ואינו מתקין את Streamlit וכלי הבדיקות של סביבת הפיתוח.
 
 1. היכנסו ל־[Railway](https://railway.app) עם חשבון GitHub.
 2. בחרו **New Project** ואז **Deploy from GitHub repo**, ובחרו את `elnatan613/TravelDNA` ואת הענף `main`.
