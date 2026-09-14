@@ -61,6 +61,14 @@ def test_travel_blocks_are_not_attractions_and_count_as_transfer_time():
     assert not any("מעבר: שעות" in s for s in report["unknown"])
 
 
+def test_meals_do_not_need_opening_hours_or_make_a_day_overloaded():
+    meal = Activity(name="ארוחת צהריים", description="בחירה גמישה", start="09:00", end="22:00", kind="meal")
+    report = validate_itinerary(trip([meal]))
+
+    assert not report["issues"]
+    assert not any("ארוחת צהריים: שעות" in item for item in report["unknown"])
+
+
 def test_outside_forecast_never_calls_weather():
     with patch("app.weather.requests.get") as get:
         report = packing_for_trip({}, date.today()+timedelta(days=14), 3)

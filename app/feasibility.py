@@ -23,8 +23,11 @@ def validate_itinerary(trip: Itinerary, pace="balanced"):
         prefix = day.date.isoformat()
         activities = sorted(day.activities, key=lambda a: a.start)
         checked += 1
-        duration = sum(max(0, minutes(a.end)-minutes(a.start)) for a in activities)
-        if sum(a.kind == "attraction" for a in activities) > limit or sum(a.heavy for a in activities) > 3 or duration > 600:
+        attraction_minutes = sum(
+            max(0, minutes(a.end)-minutes(a.start))
+            for a in activities if a.kind == "attraction"
+        )
+        if sum(a.kind == "attraction" for a in activities) > limit or sum(a.heavy for a in activities) > 3 or attraction_minutes > 600:
             issues.append(f"{prefix}: היום עמוס; כדאי להסיר פעילות או לפצל ליום נוסף.")
         for index, activity in enumerate(activities):
             label = f"{prefix} · {activity.name}"
@@ -32,15 +35,16 @@ def validate_itinerary(trip: Itinerary, pace="balanced"):
             start, end = minutes(activity.start), minutes(activity.end)
             if end <= start:
                 issues.append(f"{label}: שעת הסיום אינה מאוחרת משעת ההתחלה.")
-            if activity.kind in ("travel", "break"):
-                pass  # These blocks are not venues with opening hours.
-            elif activity.opening_source and activity.opening_date == day.date and (
+            # Restaurants and planned pauses are flexible choices, not named
+            # venues in this itinerary. Opening-hours checks apply only to
+            # attractions with dated evidence.
+            if activity.kind == "attraction" and activity.opening_source and activity.opening_date == day.date and (
                 activity.closed is True or (activity.opening_start and activity.opening_end)
             ):
                 checked += 1
                 if activity.closed or start < minutes(activity.opening_start) or end > minutes(activity.opening_end):
                     issues.append(f"{label}: הפעילות מחוץ לשעות הפתיחה שסופקו לתאריך זה.")
-            else:
+            elif activity.kind == "attraction":
                 unknown.append(f"{label}: שעות הפתיחה לתאריך זה לא אומתו.")
             if index == 0:
                 continue
