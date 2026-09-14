@@ -1,10 +1,14 @@
 # Build the React application once, then serve it from the FastAPI process.
 FROM node:22-bookworm-slim AS frontend-build
 
+WORKDIR /build
+COPY frontend/package.json frontend/package-lock.json ./frontend/
 WORKDIR /build/frontend
-COPY frontend/package.json frontend/package-lock.json ./
 RUN npm ci
 COPY frontend/ ./
+# Questionnaire.jsx imports ../../data/experience_cards.json. Keep the same
+# directory relationship that Vite has in the source checkout.
+COPY data/experience_cards.json /build/data/experience_cards.json
 RUN npm run build
 
 
