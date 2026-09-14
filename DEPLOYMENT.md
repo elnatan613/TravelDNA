@@ -4,7 +4,7 @@
 
 1. היכנסו ל־[Railway](https://railway.app) עם חשבון GitHub.
 2. בחרו **New Project** ואז **Deploy from GitHub repo**, ובחרו את `elnatan613/TravelDNA` ואת הענף `main`.
-3. ב־**Variables** הוסיפו `GEMINI_API_KEY` עם אותו ערך שקיים בקובץ `.env` המקומי. אין להעלות את קובץ `.env` ל־GitHub.
+3. ב־**Variables** הוסיפו `GEMINI_API_KEY` עם מפתח ייעודי ל־TravelDNA, והשתמשו בתפריט שלידו כדי לבחור **Seal**. אין להעלות את קובץ `.env` ל־GitHub. השרת מגביל בקשות AI לפי מבקר, כדי למנוע שימוש בלתי מבוקר במכסה.
 4. המתינו לסיום הבנייה. Railway מזהה את `Dockerfile` ובונה את ממשק ה־React ואת שרת ה־Python יחד.
 5. תחת **Settings → Networking** לחצו **Generate Domain**. זהו הקישור הציבורי של האפליקציה.
 

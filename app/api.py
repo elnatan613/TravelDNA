@@ -2,10 +2,12 @@
 from functools import lru_cache
 from pathlib import Path
 from threading import Lock
+from collections import defaultdict, deque
+from time import monotonic
 import logging
 import math
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field, model_validator
 
@@ -20,6 +22,8 @@ from matching.matcher import load_destinations, rank_destinations
 ROOT = Path(__file__).resolve().parents[1]
 app = FastAPI(title="TravelDNA")
 planning_lock = Lock()
+rate_limit_lock = Lock()
+rate_limit_events: dict[tuple[str, str], deque[float]] = defaultdict(deque)
 CITY_LABELS = dict(zip(
     ["Paris", "Barcelona", "Amsterdam", "Prague", "Vienna", "Reykjavik", "Lisbon", "Budapest", "Krakow", "Berlin", "Rome", "Florence", "Copenhagen", "Stockholm", "Dublin", "Edinburgh", "Athens", "Porto"],
     ["פריז", "ברצלונה", "אמסטרדם", "פראג", "וינה", "רייקיאוויק", "ליסבון", "בודפשט", "קרקוב", "ברלין", "רומא", "פירנצה", "קופנהגן", "סטוקהולם", "דבלין", "אדינבורו", "אתונה", "פורטו"]))
@@ -27,6 +31,21 @@ CITY_LABELS = dict(zip(
 
 def destinations():
     return load_destinations(str(ROOT / "data/processed/destinations.json"))
+
+
+def enforce_rate_limit(request: Request, action: str, limit: int, window_seconds: int):
+    """Bound public, billable AI requests per visitor in this single service."""
+    client = request.headers.get("x-forwarded-for", request.client.host if request.client else "unknown")
+    client = client.split(",", maxsplit=1)[0].strip()
+    now = monotonic()
+    key = (client, action)
+    with rate_limit_lock:
+        events = rate_limit_events[key]
+        while events and events[0] <= now - window_seconds:
+            events.popleft()
+        if len(events) >= limit:
+            raise HTTPException(429, "הגעתם למגבלת הבקשות הזמנית. נסו שוב מאוחר יותר.")
+        events.append(now)
 
 
 @lru_cache(maxsize=1)
@@ -77,7 +96,8 @@ def match(request: MatchRequest):
 
 
 @app.post("/api/plan")
-def plan(request: TripRequest):
+def plan(request: TripRequest, http_request: Request):
+    enforce_rate_limit(http_request, "plan", limit=3, window_seconds=600)
     destination = next((d for d in destinations() if d["city"] == request.city), None)
     if destination is None:
         raise HTTPException(422, "היעד אינו נתמך")
@@ -97,7 +117,8 @@ def plan(request: TripRequest):
 
 
 @app.post("/api/discover")
-def discover(survey: Survey):
+def discover(survey: Survey, http_request: Request):
+    enforce_rate_limit(http_request, "discover", limit=10, window_seconds=600)
     profile, weights = matching_profile(survey)
     try:
         notes = interpret_notes(survey.notes)
