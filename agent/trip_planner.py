@@ -55,6 +55,7 @@ def _load_dotenv_file(path):
 _load_dotenv_file(os.path.join(_PROJECT_ROOT, ".env"))
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
 GEMINI_MODEL = "gemini-2.5-flash"
+GEMINI_FALLBACK_MODEL = "gemini-2.5-flash-lite"
 
 SYSTEM_INSTRUCTION = """You are a trip-planning assistant for the TravelDNA app.
 
@@ -117,6 +118,8 @@ class TripPlanningAgent:
             ),
         )
         self.model = model
+        self.models = tuple(dict.fromkeys((model, GEMINI_FALLBACK_MODEL)))
+        self.active_model = model
         self.retriever = retriever or Retriever()
 
     def search_knowledge(self, city: str, query: str) -> str:
@@ -165,41 +168,47 @@ class TripPlanningAgent:
                 "(ראו rag/build_knowledge_base.py כדי להוסיף עוד ערים)."
             )
 
-        chat = self.client.chats.create(
-            model=self.model,
-            config=types.GenerateContentConfig(
-                system_instruction=SYSTEM_INSTRUCTION,
-                tools=[self.search_knowledge, self.estimate_daily_budget],
-            ),
-        )
         prompt = (
             f"Plan a {days}-day trip to {city}. "
             f"Total budget: ${budget_total_usd} USD (excluding flights and accommodation). "
             f"Traveler preferences: {preferences or 'none given - keep it well-rounded'}."
         )
-        try:
-            response = chat.send_message(prompt)
-            def has_foreign_text(text):
-                prose = re.sub(r"https?://[^\s<>]+", "", text or "")
-                return bool(re.search(r"[A-Za-zÀ-ž]", prose))
+        last_provider_error = None
+        for model in self.models:
+            chat = self.client.chats.create(
+                model=model,
+                config=types.GenerateContentConfig(
+                    system_instruction=SYSTEM_INSTRUCTION,
+                    tools=[self.search_knowledge, self.estimate_daily_budget],
+                ),
+            )
+            try:
+                response = chat.send_message(prompt)
 
-            if has_foreign_text(response.text):
-                response = chat.send_message(
-                    "תקן את התשובה האחרונה לעברית בלבד. תעתק לעברית כל שם "
-                    "של אתר, מסעדה או יישומון. הסר שמות לועזיים בסוגריים. "
-                    "שמור על כל העובדות, הסכומים והקישורים ללא שינוי. "
-                    "אל תקרא לכלים נוספים. החזר רק את המסלול המתוקן."
-                )
-            if not response.text or has_foreign_text(response.text):
-                raise RuntimeError("The itinerary did not pass Hebrew output validation")
-        except errors.APIError as error:
-            if error.code in {429, 503}:
-                raise TripServiceUnavailable(
-                    "שירות בניית המסלולים אינו זמין כרגע. "
-                    "אפשר לנסות שוב בעוד כמה דקות."
-                ) from error
-            raise
-        return response.text
+                def has_foreign_text(text):
+                    prose = re.sub(r"https?://[^\s<>]+", "", text or "")
+                    return bool(re.search(r"[A-Za-zÀ-ž]", prose))
+
+                if has_foreign_text(response.text):
+                    response = chat.send_message(
+                        "תקן את התשובה האחרונה לעברית בלבד. תעתק לעברית כל שם "
+                        "של אתר, מסעדה או יישומון. הסר שמות לועזיים בסוגריים. "
+                        "שמור על כל העובדות, הסכומים והקישורים ללא שינוי. "
+                        "אל תקרא לכלים נוספים. החזר רק את המסלול המתוקן."
+                    )
+                if not response.text or has_foreign_text(response.text):
+                    raise RuntimeError("The itinerary did not pass Hebrew output validation")
+                self.active_model = model
+                return response.text
+            except errors.APIError as error:
+                if error.code in {429, 503}:
+                    last_provider_error = error
+                    continue
+                raise
+        raise TripServiceUnavailable(
+            "שירות בניית המסלולים אינו זמין כרגע. "
+            "אפשר לנסות שוב בעוד כמה דקות."
+        ) from last_provider_error
 
 
 if __name__ == "__main__":

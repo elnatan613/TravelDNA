@@ -60,7 +60,7 @@ def build_structured_trip(agent, request):
             f"{preferences}\nStart date: {request.start_date}. Pace: {request.pace}. "
             "Include proposed start/end times for every activity and allow travel and meal breaks.")
         response = agent.client.models.generate_content(
-            model=agent.model,
+            model=agent.active_model,
             contents=f"Convert this itinerary into the supplied schema. All prose must be Hebrew. "
             f"Use exactly these dates: {dates}. Keep all venues and source URLs from the original. "
             "Times use HH:MM local 24-hour format and are proposed, not confirmed reservations. "
@@ -89,7 +89,7 @@ def build_structured_trip(agent, request):
     review = None
     try:
         response = agent.client.models.generate_content(
-            model=agent.model,
+            model=agent.active_model,
             contents="Review this itinerary as an independent travel guide. Give a 0-100 plausibility score "
             "and concise Hebrew corrective notes about pace, grouping, meal breaks, likely travel friction, "
             "and possible weekly closures on the requested weekdays that the traveler should verify. "

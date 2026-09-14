@@ -126,6 +126,23 @@ def test_plan_trip_supported_city_calls_llm_with_tools():
     assert "Paris" in sent_prompt and "2-day" in sent_prompt and "300" in sent_prompt
 
 
+def test_plan_trip_uses_lite_model_when_primary_is_rate_limited():
+    from google.genai.errors import APIError
+    primary_chat, lite_chat = mock.Mock(), mock.Mock()
+    primary_chat.send_message.side_effect = APIError(429, {"error": {"message": "rate limit", "code": 429}})
+    lite_chat.send_message.return_value.text = "מסלול לדוגמה"
+    agent = _make_agent()
+    agent.client.chats.create.side_effect = [primary_chat, lite_chat]
+
+    with mock.patch("agent.trip_planner.available_cities", return_value=["Paris"]):
+        assert agent.plan_trip("Paris", 1, 100) == "מסלול לדוגמה"
+
+    assert agent.active_model == "gemini-2.5-flash-lite"
+    assert [call.kwargs["model"] for call in agent.client.chats.create.call_args_list] == [
+        "gemini-2.5-flash", "gemini-2.5-flash-lite"
+    ]
+
+
 def test_client_retries_overload_at_http_level():
     with mock.patch("agent.trip_planner.genai.Client") as client:
         TripPlanningAgent(api_key="test", retriever=mock.Mock())
