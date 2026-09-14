@@ -133,10 +133,12 @@ def test_structuring_strips_invented_evidence_and_sources():
     agent.plan_trip.return_value = "מסלול\nhttps://example.com/source"
     agent.client.models.generate_content.side_effect = [Mock(text=generated.model_dump_json()),
                                                       Mock(text='{"score":70,"notes":["קחו הפסקה"]}')]
-    result, review = build_structured_trip(agent, TripRequest(city="Paris", start_date=date.today(), days=1))
+    with patch("app.location_lookup.enrich_trip_locations") as enrich:
+        result, review = build_structured_trip(agent, TripRequest(city="Paris", start_date=date.today(), days=1))
     assert result.sources == ["https://example.com/source"]
     assert result.days[0].activities[0].latitude is None
     assert result.days[0].activities[0].closed is None
+    enrich.assert_called_once_with(result, "Paris")
     assert review["score"] == 70
 
 

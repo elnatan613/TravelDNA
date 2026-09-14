@@ -16,6 +16,8 @@ class Activity(BaseModel):
     latitude: float | None = Field(default=None, ge=-90, le=90)
     longitude: float | None = Field(default=None, ge=-180, le=180)
     location_source: str | None = None
+    address: str | None = Field(default=None, max_length=500)
+    map_url: str | None = Field(default=None, max_length=1000)
     opening_start: str | None = Field(default=None, pattern=r"^(?:[01]\d|2[0-3]):[0-5]\d$")
     opening_end: str | None = Field(default=None, pattern=r"^(?:[01]\d|2[0-3]):[0-5]\d$")
     closed: bool | None = None

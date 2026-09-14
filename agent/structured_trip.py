@@ -83,9 +83,13 @@ def build_structured_trip(agent, request):
     # Never let an LLM promote its own invented evidence into verified facts.
     for day in trip.days:
         for activity in day.activities:
-            for key in ("latitude", "longitude", "location_source", "opening_start", "opening_end",
+            for key in ("latitude", "longitude", "location_source", "address", "map_url", "opening_start", "opening_end",
                         "closed", "opening_source", "opening_date", "travel_minutes", "travel_source"):
                 setattr(activity, key, None)
+    # The itinerary prose comes from the model, but location evidence does not:
+    # only OpenStreetMap can attach a verified address or coordinates.
+    from app.location_lookup import enrich_trip_locations
+    enrich_trip_locations(trip, request.city)
     review = None
     try:
         response = agent.client.models.generate_content(
