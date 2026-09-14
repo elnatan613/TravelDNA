@@ -9,3 +9,5 @@ data/processed/*
 !data/processed/.gitkeep
 !data/processed/destinations.json
 .streamlit/
+frontend/node_modules/
+frontend/dist/

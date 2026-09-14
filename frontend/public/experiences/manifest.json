@@ -1,0 +1,74 @@
+[
+  {
+    "id": "city",
+    "file": "city.webp",
+    "generator": "Built-in image_gen",
+    "prompt": "Use case: photorealistic-natural. Create ONE portrait 3:4 travel-experience photograph for a TravelDNA swipe card. Subject: A leisurely European pedestrian neighborhood, narrow picturesque lanes with independent shops and small street cafes. Focus on wandering, no famous landmarks. Cohesive editorial travel photography, authentic textures, natural colors, warm inviting atmosphere, modest contrast, realistic people and environments, equally attractive as other vacation options. Composition: environment and experience are primary, faces secondary; subject legible on a mobile card, leave lower 20 percent relatively simple for a separate UI caption. This is a conceptual travel experience, not a claimed real location. Absolutely no text, number badges, graphics, collage, borders, logos or watermarks. One photograph only."
+  },
+  {
+    "id": "picnic",
+    "file": "picnic.webp",
+    "generator": "Built-in image_gen",
+    "prompt": "Use case: photorealistic-natural. Create ONE portrait 3:4 travel-experience photograph for a TravelDNA swipe card. Subject: An accessible lakeside picnic spot with a blanket and picnic basket near a level path, beautiful distant mountain scenery, relaxed natural daylight. Cohesive editorial travel photography, authentic textures, natural colors, warm inviting atmosphere, modest contrast, realistic people and environments, equally attractive as other vacation options. Composition: environment and experience are primary, faces secondary; subject legible on a mobile card, leave lower 20 percent relatively simple for a separate UI caption. This is a conceptual travel experience, not a claimed real location. Absolutely no text, number badges, graphics, collage, borders, logos or watermarks. One photograph only."
+  },
+  {
+    "id": "museum",
+    "file": "museum.webp",
+    "generator": "Built-in image_gen",
+    "prompt": "Use case: photorealistic-natural. Create ONE portrait 3:4 travel-experience photograph for a TravelDNA swipe card. Subject: Visitors spending a quiet thoughtful morning contemplating paintings inside an art museum. Realistically lit inviting gallery, faces not the focus. Cohesive editorial travel photography, authentic textures, natural colors, warm inviting atmosphere, modest contrast, realistic people and environments, equally attractive as other vacation options. Composition: environment and experience are primary, faces secondary; subject legible on a mobile card, leave lower 20 percent relatively simple for a separate UI caption. This is a conceptual travel experience, not a claimed real location. Absolutely no text, number badges, graphics, collage, borders, logos or watermarks. One photograph only."
+  },
+  {
+    "id": "food",
+    "file": "food.webp",
+    "generator": "Built-in image_gen",
+    "prompt": "Use case: photorealistic-natural. Create ONE portrait 3:4 travel-experience photograph for a TravelDNA swipe card. Subject: Travelers tasting local food at a lively outdoor food market, appetizing small dishes and stalls. Candid hands and food in focus. Cohesive editorial travel photography, authentic textures, natural colors, warm inviting atmosphere, modest contrast, realistic people and environments, equally attractive as other vacation options. Composition: environment and experience are primary, faces secondary; subject legible on a mobile card, leave lower 20 percent relatively simple for a separate UI caption. This is a conceptual travel experience, not a claimed real location. Absolutely no text, number badges, graphics, collage, borders, logos or watermarks. One photograph only."
+  },
+  {
+    "id": "hike",
+    "file": "hike.webp",
+    "generator": "Built-in image_gen",
+    "prompt": "Use case: photorealistic-natural. Create ONE portrait 3:4 travel-experience photograph for a TravelDNA swipe card. Subject: Adults on a moderately strenuous mountain walking trail with clear incline and hiking shoes, trail stretching into the hills. Natural realistic scenic daylight. Cohesive editorial travel photography, authentic textures, natural colors, warm inviting atmosphere, modest contrast, realistic people and environments, equally attractive as other vacation options. Composition: environment and experience are primary, faces secondary; subject legible on a mobile card, leave lower 20 percent relatively simple for a separate UI caption. This is a conceptual travel experience, not a claimed real location. Absolutely no text, number badges, graphics, collage, borders, logos or watermarks. One photograph only."
+  },
+  {
+    "id": "music",
+    "file": "music.webp",
+    "generator": "Built-in image_gen",
+    "prompt": "Use case: photorealistic-natural. Create ONE portrait 3:4 travel-experience photograph for a TravelDNA swipe card. Subject: An intimate live acoustic jazz music performance with a seated audience in a pleasant small courtyard in the evening. Warm natural stage lighting. Cohesive editorial travel photography, authentic textures, natural colors, warm inviting atmosphere, modest contrast, realistic people and environments, equally attractive as other vacation options. Composition: environment and experience are primary, faces secondary; subject legible on a mobile card, leave lower 20 percent relatively simple for a separate UI caption. This is a conceptual travel experience, not a claimed real location. Absolutely no text, number badges, graphics, collage, borders, logos or watermarks. One photograph only."
+  },
+  {
+    "id": "nightlife",
+    "file": "nightlife.webp",
+    "generator": "Built-in image_gen",
+    "prompt": "Use case: photorealistic-natural. Create ONE portrait 3:4 travel-experience photograph for a TravelDNA swipe card. Subject: A tasteful lively late-night dance floor with adult dancers, warm colorful music venue lighting, people enjoying a night out. No alcohol emphasis. Cohesive editorial travel photography, authentic textures, natural colors, warm inviting atmosphere, modest contrast, realistic people and environments, equally attractive as other vacation options. Composition: environment and experience are primary, faces secondary; subject legible on a mobile card, leave lower 20 percent relatively simple for a separate UI caption. This is a conceptual travel experience, not a claimed real location. Absolutely no text, number badges, graphics, collage, borders, logos or watermarks. One photograph only."
+  },
+  {
+    "id": "workshop",
+    "file": "workshop.webp",
+    "generator": "Built-in image_gen",
+    "prompt": "Use case: photorealistic-natural. Create ONE portrait 3:4 travel-experience photograph for a TravelDNA swipe card. Subject: Adults meeting through a hands-on group cooking workshop around a communal table, candid collaborative moment. Friendly realistic natural lighting. Cohesive editorial travel photography, authentic textures, natural colors, warm inviting atmosphere, modest contrast, realistic people and environments, equally attractive as other vacation options. Composition: environment and experience are primary, faces secondary; subject legible on a mobile card, leave lower 20 percent relatively simple for a separate UI caption. This is a conceptual travel experience, not a claimed real location. Absolutely no text, number badges, graphics, collage, borders, logos or watermarks. One photograph only."
+  },
+  {
+    "id": "free-time",
+    "file": "free-time.webp",
+    "generator": "Built-in image_gen",
+    "prompt": "Use case: photorealistic-natural. Create ONE portrait 3:4 travel-experience photograph for a TravelDNA swipe card. Subject: A relaxed spontaneous afternoon at an outdoor cafe terrace, a cup of coffee and an open blank journal, leisurely street view, no readable text. Cohesive editorial travel photography, authentic textures, natural colors, warm inviting atmosphere, modest contrast, realistic people and environments, equally attractive as other vacation options. Composition: environment and experience are primary, faces secondary; subject legible on a mobile card, leave lower 20 percent relatively simple for a separate UI caption. This is a conceptual travel experience, not a claimed real location. Absolutely no text, number badges, graphics, collage, borders, logos or watermarks. One photograph only."
+  },
+  {
+    "id": "full-day",
+    "file": "full-day.webp",
+    "generator": "Built-in image_gen",
+    "prompt": "Use case: photorealistic-natural. Create ONE portrait 3:4 travel-experience photograph for a TravelDNA swipe card. Subject: Travelers actively exploring a European historic district, walking towards an architectural attraction with a small paper map in hand. Energetic daytime touring, no identifiable famous landmark. Cohesive editorial travel photography, authentic textures, natural colors, warm inviting atmosphere, modest contrast, realistic people and environments, equally attractive as other vacation options. Composition: environment and experience are primary, faces secondary; subject legible on a mobile card, leave lower 20 percent relatively simple for a separate UI caption. This is a conceptual travel experience, not a claimed real location. Absolutely no text, number badges, graphics, collage, borders, logos or watermarks. One photograph only."
+  },
+  {
+    "id": "shopping",
+    "file": "shopping.webp",
+    "generator": "Built-in image_gen",
+    "prompt": "Use case: photorealistic-natural. Create ONE portrait 3:4 travel-experience photograph for a TravelDNA swipe card. Subject: Browsing independent artisan shops with woven goods ceramics and handmade objects in a colorful craft market. Casual travel shopping, no logos. Cohesive editorial travel photography, authentic textures, natural colors, warm inviting atmosphere, modest contrast, realistic people and environments, equally attractive as other vacation options. Composition: environment and experience are primary, faces secondary; subject legible on a mobile card, leave lower 20 percent relatively simple for a separate UI caption. This is a conceptual travel experience, not a claimed real location. Absolutely no text, number badges, graphics, collage, borders, logos or watermarks. One photograph only."
+  },
+  {
+    "id": "beach",
+    "file": "beach.webp",
+    "generator": "Built-in image_gen",
+    "prompt": "Use case: photorealistic-natural. Create ONE portrait 3:4 travel-experience photograph for a TravelDNA swipe card. Subject: A peaceful sandy beach afternoon with a gentle turquoise sea, shade umbrella and relaxed beach chairs, no resort luxury signaling, natural inviting daylight. Cohesive editorial travel photography, authentic textures, natural colors, warm inviting atmosphere, modest contrast, realistic people and environments, equally attractive as other vacation options. Composition: environment and experience are primary, faces secondary; subject legible on a mobile card, leave lower 20 percent relatively simple for a separate UI caption. This is a conceptual travel experience, not a claimed real location. Absolutely no text, number badges, graphics, collage, borders, logos or watermarks. One photograph only."
+  }
+]

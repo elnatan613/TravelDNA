@@ -1,0 +1,73 @@
+"""Deterministic checks. Unknown evidence never counts as a passed check."""
+from math import asin, cos, radians, sin, sqrt
+
+from app.trip_models import Itinerary
+
+
+def minutes(value):
+    hours, mins = map(int, value.split(":"))
+    return hours * 60 + mins
+
+
+def distance_km(a, b):
+    lat1, lat2 = radians(a.latitude), radians(b.latitude)
+    delta = radians(b.longitude - a.longitude)
+    return 6371 * 2 * asin(min(1, sqrt(sin((lat2-lat1)/2)**2 + cos(lat1)*cos(lat2)*sin(delta/2)**2)))
+
+
+def validate_itinerary(trip: Itinerary, pace="balanced"):
+    issues, unknown = [], []
+    checked = 0
+    limit = {"relaxed": 4, "balanced": 6, "busy": 8}[pace]
+    for day in trip.days:
+        prefix = day.date.isoformat()
+        activities = sorted(day.activities, key=lambda a: a.start)
+        checked += 1
+        duration = sum(max(0, minutes(a.end)-minutes(a.start)) for a in activities)
+        if sum(a.kind == "attraction" for a in activities) > limit or sum(a.heavy for a in activities) > 3 or duration > 600:
+            issues.append(f"{prefix}: היום עמוס; כדאי להסיר פעילות או לפצל ליום נוסף.")
+        for index, activity in enumerate(activities):
+            label = f"{prefix} · {activity.name}"
+            checked += 1
+            start, end = minutes(activity.start), minutes(activity.end)
+            if end <= start:
+                issues.append(f"{label}: שעת הסיום אינה מאוחרת משעת ההתחלה.")
+            if activity.kind in ("travel", "break"):
+                pass  # These blocks are not venues with opening hours.
+            elif activity.opening_source and activity.opening_date == day.date and (
+                activity.closed is True or (activity.opening_start and activity.opening_end)
+            ):
+                checked += 1
+                if activity.closed or start < minutes(activity.opening_start) or end > minutes(activity.opening_end):
+                    issues.append(f"{label}: הפעילות מחוץ לשעות הפתיחה שסופקו לתאריך זה.")
+            else:
+                unknown.append(f"{label}: שעות הפתיחה לתאריך זה לא אומתו.")
+            if index == 0:
+                continue
+            previous = activities[index-1]
+            gap = start - minutes(previous.end)
+            checked += 1
+            if gap < 0:
+                issues.append(f"{label}: הפעילות חופפת לפעילות הקודמת.")
+            if activity.kind in ("travel", "break"):
+                continue
+            previous = next((a for a in reversed(activities[:index]) if a.kind not in ("travel", "break")), None)
+            if previous is None:
+                continue
+            gap = start - minutes(previous.end)
+            if activity.travel_minutes is not None and activity.travel_source:
+                checked += 1
+                if gap < activity.travel_minutes:
+                    issues.append(f"{label}: נדרשות {activity.travel_minutes} דקות מעבר, אך הוקצו {max(0, gap)}.")
+            else:
+                unknown.append(f"{label}: זמן המעבר מהפעילות הקודמת לא אומת.")
+                if all(a.latitude is not None and a.longitude is not None and a.location_source for a in (previous, activity)):
+                    km = distance_km(previous, activity)
+                    # A conservative impossibility screen, never a routing estimate.
+                    if km > 2 and gap < km / 130 * 60:
+                        issues.append(f"{label}: מרחק אווירי של {km:.1f} ק״מ אינו סביר בזמן המעבר שהוקצה.")
+    return {
+        "status": "issues" if issues else "partial" if unknown else "passed",
+        "issues": issues, "unknown": unknown, "checks_performed": checked,
+        "coverage_percent": round(100 * checked / (checked + len(unknown))),
+    }
