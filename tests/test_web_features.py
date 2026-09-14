@@ -139,3 +139,17 @@ def test_structuring_rejects_wrong_dates():
     agent.client.models.generate_content.return_value.text = trip([activity()]).model_dump_json()
     with pytest.raises(ValueError, match="incorrect dates"):
         build_structured_trip(agent, TripRequest(city="Paris", start_date=date.today()+timedelta(days=1), days=1))
+
+
+def test_structuring_returns_basic_trip_when_provider_is_unavailable():
+    from agent.structured_trip import build_structured_trip
+    from agent.trip_planner import TripServiceUnavailable
+    from app.trip_models import TripRequest
+    agent = Mock()
+    agent.plan_trip.side_effect = TripServiceUnavailable("unavailable")
+
+    result, review = build_structured_trip(agent, TripRequest(city="Paris", start_date=date.today(), days=2))
+
+    assert len(result.days) == 2
+    assert result.sources == ["https://en.wikivoyage.org/wiki/Paris"]
+    assert review is None

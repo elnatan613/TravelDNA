@@ -193,11 +193,10 @@ class TripPlanningAgent:
             if not response.text or has_foreign_text(response.text):
                 raise RuntimeError("The itinerary did not pass Hebrew output validation")
         except errors.APIError as error:
-            if error.code == 503:
+            if error.code in {429, 503}:
                 raise TripServiceUnavailable(
-                    "שירות בניית המסלולים עמוס כרגע. גם לאחר ניסיונות חוזרים "
-                    "לא התקבלה תשובה. ההעדפות שלך נשמרו; אפשר ללחוץ שוב "
-                    "על ״בנה לי מסלול״ בעוד כמה דקות."
+                    "שירות בניית המסלולים אינו זמין כרגע. "
+                    "אפשר לנסות שוב בעוד כמה דקות."
                 ) from error
             raise
         return response.text

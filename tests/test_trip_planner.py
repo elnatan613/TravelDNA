@@ -148,7 +148,7 @@ def test_foreign_names_are_rewritten_but_source_urls_are_allowed():
     assert chat.send_message.call_count == 2
 
 
-@pytest.mark.parametrize("code", [503, 400, 403])
+@pytest.mark.parametrize("code", [429, 503, 400, 403])
 def test_provider_errors_are_classified(code):
     from google.genai.errors import APIError
     from agent.trip_planner import TripServiceUnavailable
@@ -157,10 +157,10 @@ def test_provider_errors_are_classified(code):
     error = APIError(code, {"error": {"message": "provider details", "code": code}})
     agent.client.chats.create.return_value.send_message.side_effect = error
     with mock.patch("agent.trip_planner.available_cities", return_value=["Paris"]):
-        with pytest.raises(TripServiceUnavailable if code == 503 else APIError) as caught:
+        with pytest.raises(TripServiceUnavailable if code in {429, 503} else APIError) as caught:
             agent.plan_trip("Paris", 3, 500)
-    if code == 503:
+    if code in {429, 503}:
         assert "provider details" not in str(caught.value)
-        assert "עמוס" in str(caught.value)
+        assert "אינו זמין" in str(caught.value)
     else:
         assert caught.value is error
