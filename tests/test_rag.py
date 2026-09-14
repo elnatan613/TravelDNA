@@ -127,6 +127,20 @@ def test_retrieve_top_k_larger_than_available_does_not_crash(tmp_path, monkeypat
     assert len(results) == 1
 
 
+def test_lexical_retrieval_runs_without_embedding_model(tmp_path, monkeypatch):
+    chunks = [
+        {"city": "TestCity", "section": "Museums", "text": "Museum passes save money.", "source": "x"},
+        {"city": "TestCity", "section": "Food", "text": "Try local restaurants.", "source": "x"},
+    ]
+    _write_fake_knowledge_base(tmp_path, "TestCity", chunks, [[1.0], [0.0]])
+    monkeypatch.setattr(retriever_module, "_KNOWLEDGE_BASE_DIR", str(tmp_path))
+
+    results = retriever_module.Retriever(mode="lexical").retrieve("best museums", "TestCity", top_k=1)
+
+    assert results[0]["section"] == "Museums"
+    assert results[0]["score"] == pytest.approx(1.0)
+
+
 def test_retrieve_missing_city_raises_filenotfound(tmp_path, monkeypatch):
     monkeypatch.setattr(retriever_module, "_KNOWLEDGE_BASE_DIR", str(tmp_path))
     fake_model = mock.Mock()

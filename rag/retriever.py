@@ -10,9 +10,18 @@
 import json
 import os
 import sys
+import re
 
-import numpy as np
-from sentence_transformers import SentenceTransformer
+# The full embedding stack is deliberately optional. Railway's starter
+# container has 1 GB RAM, while loading PyTorch plus all-mpnet-base-v2 exceeds
+# that limit. Local development can keep using semantic retrieval; production
+# uses the small lexical retriever below.
+try:
+    import numpy as np
+    from sentence_transformers import SentenceTransformer
+except ImportError:  # Production image does not install the heavy stack.
+    np = None
+    SentenceTransformer = None
 
 _KNOWLEDGE_BASE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "knowledge_base")
 # חייב להיות אותו מודל שנבנה איתו בסיס הידע (ראו הערה ב-build_knowledge_base.py
@@ -44,11 +53,22 @@ class Retriever:
     שאילתה.
     """
 
-    def __init__(self, model_name: str = _EMBEDDING_MODEL_NAME):
-        self.model = SentenceTransformer(model_name)
-        self._city_cache: dict[str, tuple[list[dict], np.ndarray]] = {}
+    def __init__(self, model_name: str = _EMBEDDING_MODEL_NAME, mode: str | None = None):
+        self.mode = (mode or os.environ.get("TRAVELDNA_RAG_MODE", "semantic")).lower()
+        if self.mode not in {"semantic", "lexical"}:
+            raise ValueError("TRAVELDNA_RAG_MODE חייב להיות semantic או lexical")
+        if self.mode == "semantic":
+            if SentenceTransformer is None:
+                raise RuntimeError(
+                    "חיפוש סמנטי דורש sentence-transformers. "
+                    "בפרודקשן הגדר TRAVELDNA_RAG_MODE=lexical."
+                )
+            self.model = SentenceTransformer(model_name)
+        else:
+            self.model = None
+        self._city_cache: dict[str, tuple[list[dict], object | None]] = {}
 
-    def _load_city(self, city: str) -> tuple[list[dict], np.ndarray]:
+    def _load_city(self, city: str) -> tuple[list[dict], object | None]:
         if city in self._city_cache:
             return self._city_cache[city]
 
@@ -62,7 +82,7 @@ class Retriever:
 
         with open(chunks_path, encoding="utf-8") as f:
             chunks = json.load(f)
-        embeddings = np.load(embeddings_path)
+        embeddings = np.load(embeddings_path) if self.mode == "semantic" else None
 
         self._city_cache[city] = (chunks, embeddings)
         return chunks, embeddings
@@ -74,6 +94,9 @@ class Retriever:
         "source", "score"}.
         """
         chunks, embeddings = self._load_city(city)
+        if self.mode == "lexical":
+            return self._lexical_retrieve(query, chunks, top_k)
+
         query_embedding = self.model.encode([query])[0]
 
         # cosine similarity = מכפלה פנימית מנורמלת (embeddings כבר בגודל קבוע
@@ -86,6 +109,31 @@ class Retriever:
         top_indices = np.argsort(similarities)[::-1][:top_k]
 
         return [{**chunks[i], "score": round(float(similarities[i]), 3)} for i in top_indices]
+
+    @staticmethod
+    def _lexical_retrieve(query: str, chunks: list[dict], top_k: int) -> list[dict]:
+        """Rank guide snippets by matching useful English query words.
+
+        The guide corpus and the agent tool prompts are English. This keeps
+        curated source material available in low-memory deployments while
+        avoiding model downloads during a visitor's request.
+        """
+        tokens = {
+            token for token in re.findall(r"[a-z0-9]{3,}", query.lower())
+            if token not in {"about", "best", "city", "find", "from", "have", "into", "more", "that", "the", "this", "what", "with"}
+        }
+        scored = []
+        for index, chunk in enumerate(chunks):
+            haystack = f"{chunk.get('section', '')} {chunk.get('text', '')}".lower()
+            hits = sum(token in haystack for token in tokens)
+            # Keep guide order stable when there are no matches, so the
+            # generator still gets an evidence-backed city overview.
+            scored.append((hits, -index, chunk))
+        scored.sort(reverse=True, key=lambda item: (item[0], item[1]))
+        return [
+            {**chunk, "score": round(hits / max(len(tokens), 1), 3)}
+            for hits, _, chunk in scored[:min(top_k, len(chunks))]
+        ]
 
 
 if __name__ == "__main__":

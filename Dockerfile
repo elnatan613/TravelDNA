@@ -16,7 +16,8 @@ FROM python:3.11-slim
 
 WORKDIR /app
 ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1
+    PYTHONUNBUFFERED=1 \
+    TRAVELDNA_RAG_MODE=lexical
 
 COPY requirements.production.txt ./
 RUN pip install --no-cache-dir -r requirements.production.txt
