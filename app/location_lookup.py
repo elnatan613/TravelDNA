@@ -68,6 +68,7 @@ def _estimated_cost(item: dict, city: str) -> str | None:
 
 def _address(tags: dict) -> str | None:
     """Make a concise address from an OpenStreetMap/Nominatim result."""
+    tags = tags or {}
     street = " ".join(part for part in (tags.get("road"), tags.get("house_number")) if part)
     locality = tags.get("suburb") or tags.get("neighbourhood") or tags.get("city") or tags.get("town")
     parts = [part for part in (street, locality, tags.get("city") if locality != tags.get("city") else None) if part]
@@ -87,10 +88,12 @@ def find_venue(name: str, city: str) -> dict | None:
         latitude, longitude = float(item["lat"]), float(item["lon"])
         if not -90 <= latitude <= 90 or not -180 <= longitude <= 180:
             return None
-        address = _address(item.get("address", {}))
+        address = _address(item.get("address"))
         if not address:
             return None
-        extra = item.get("extratags", {})
+        # Nominatim may explicitly return null for optional extra tags.
+        # An absent website or opening-hours field must not cancel the route.
+        extra = item.get("extratags") or {}
         website = extra.get("website") or extra.get("contact:website")
         if website and not website.startswith(("https://", "http://")):
             website = None
@@ -105,7 +108,7 @@ def find_venue(name: str, city: str) -> dict | None:
             "website": website,
             "estimated_cost": _estimated_cost(item, city),
         }
-    except (requests.RequestException, ValueError, KeyError, TypeError):
+    except (requests.RequestException, ValueError, KeyError, TypeError, AttributeError):
         logging.getLogger(__name__).info("OpenStreetMap venue lookup unavailable for %s", name)
         return None
 

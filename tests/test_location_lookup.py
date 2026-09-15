@@ -31,6 +31,22 @@ def test_venue_lookup_does_not_create_an_address_when_no_result():
         assert find_venue("מקום כללי", "Paris") is None
 
 
+def test_venue_lookup_allows_missing_optional_osm_tags():
+    response = Mock()
+    response.json.return_value = [{
+        "lat": "48.860611", "lon": "2.337644",
+        "address": {"road": "Rue de Rivoli", "city": "Paris"},
+        "type": "museum", "extratags": None,
+    }]
+    find_venue.cache_clear()
+    with patch("app.location_lookup.requests.get", return_value=response):
+        result = find_venue("מוזיאון לדוגמה", "Paris")
+
+    assert result["address"] == "Rue de Rivoli, Paris"
+    assert result["opening_hours"] is None
+    assert result["website"] is None
+
+
 def test_restaurant_gets_the_same_place_details_and_cost_range():
     response = Mock()
     response.json.return_value = [{
