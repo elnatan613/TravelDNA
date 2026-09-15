@@ -93,6 +93,10 @@ When you write the day-by-day itinerary:
 - Meals are recommendations too: when recommending breakfast, lunch, dinner
   or coffee, name one specific restaurant, café or food market from the search
   results. If no named food venue is available, call it flexible meal time.
+- Build a varied route across the requested days. Do not recommend the same
+  venue twice anywhere in the itinerary. Before writing, gather a pool of
+  distinct named venues large enough for the number of days, and group nearby
+  venues on the same day rather than repeating a famous landmark.
 - Structure the answer as one section per day.
 - Keep it concise and practical, not flowery.
 - End with a "מקורות" section that lists the unique source URLs returned by

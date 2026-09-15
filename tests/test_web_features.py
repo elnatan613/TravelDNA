@@ -209,6 +209,19 @@ def test_generic_meals_become_open_meal_time_but_named_restaurants_remain():
     assert itinerary.days[0].activities[1].name == "רוזה"
 
 
+def test_duplicate_recommendation_becomes_open_time():
+    from agent.structured_trip import _replace_generic_attractions
+    first = Activity(name="גני טווילרי", description="", start="09:00", end="10:00")
+    repeated = Activity(name="גני טווילרי", description="", start="11:00", end="12:00")
+    itinerary = trip([first, repeated])
+
+    _replace_generic_attractions(itinerary)
+
+    assert itinerary.days[0].activities[0].kind == "attraction"
+    assert itinerary.days[0].activities[1].kind == "break"
+    assert "כבר מופיע" in itinerary.days[0].activities[1].description
+
+
 def test_structuring_returns_basic_trip_when_provider_is_unavailable():
     from agent.structured_trip import build_structured_trip
     from agent.trip_planner import TripServiceUnavailable
