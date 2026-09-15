@@ -186,6 +186,22 @@ def test_structuring_rejects_wrong_dates():
         build_structured_trip(agent, TripRequest(city="Paris", start_date=date.today()+timedelta(days=1), days=1))
 
 
+def test_structuring_keeps_a_named_candidate_when_its_official_name_is_latin():
+    from agent.structured_trip import build_structured_trip
+    from app.trip_models import TripRequest
+    generated = trip([Activity(name="Louvre Museum", description="ביקור באוסף האמנות.", start="09:00", end="11:00")])
+    agent = Mock()
+    agent.plan_trip.return_value = "מסלול\nhttps://example.com/source"
+    agent.last_candidate_pool = "- museum: Louvre Museum"
+    agent.client.models.generate_content.side_effect = [Mock(text=generated.model_dump_json()),
+                                                      Mock(text='{"score":70,"notes":[]}')]
+
+    with patch("app.location_lookup.enrich_trip_locations"):
+        result, _ = build_structured_trip(agent, TripRequest(city="Paris", start_date=date.today(), days=1))
+
+    assert result.days[0].activities[0].name == "Louvre Museum"
+
+
 def test_generic_attractions_become_open_time_not_fake_recommendations():
     from agent.structured_trip import _replace_generic_attractions
     generic = Activity(name="שוק מקומי", description="ביקור", start="09:00", end="11:00")
