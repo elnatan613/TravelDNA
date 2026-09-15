@@ -195,6 +195,20 @@ def test_generic_attractions_become_open_time_not_fake_recommendations():
     assert itinerary.days[0].activities[1].kind == "attraction"
 
 
+def test_generic_meals_become_open_meal_time_but_named_restaurants_remain():
+    from agent.structured_trip import _replace_generic_attractions
+    generic = Activity(name="ארוחת ערב", description="", start="18:00", end="19:00", kind="meal")
+    named = Activity(name="ארוחת ערב במסעדת רוזה", description="", start="19:30", end="21:00", kind="meal")
+    itinerary = trip([generic, named])
+
+    _replace_generic_attractions(itinerary)
+
+    assert itinerary.days[0].activities[0].kind == "break"
+    assert itinerary.days[0].activities[0].name == "זמן לארוחה"
+    assert itinerary.days[0].activities[1].kind == "meal"
+    assert itinerary.days[0].activities[1].name == "רוזה"
+
+
 def test_structuring_returns_basic_trip_when_provider_is_unavailable():
     from agent.structured_trip import build_structured_trip
     from agent.trip_planner import TripServiceUnavailable

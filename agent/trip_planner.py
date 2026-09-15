@@ -90,6 +90,9 @@ When you write the day-by-day itinerary:
   categories are not recommendations. Use the venue's proper name. If the
   search results do not contain a named venue, make that block flexible free
   time instead of pretending it is an attraction.
+- Meals are recommendations too: when recommending breakfast, lunch, dinner
+  or coffee, name one specific restaurant, café or food market from the search
+  results. If no named food venue is available, call it flexible meal time.
 - Structure the answer as one section per day.
 - Keep it concise and practical, not flowery.
 - End with a "מקורות" section that lists the unique source URLs returned by

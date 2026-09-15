@@ -14,6 +14,7 @@ _TYPE_LABELS = {
     "viewpoint": "נקודת תצפית", "marketplace": "שוק", "market": "שוק",
     "monument": "אנדרטה", "memorial": "אתר זיכרון", "castle": "טירה",
     "park": "פארק", "zoo": "גן חיות", "theme_park": "פארק שעשועים",
+    "restaurant": "מסעדה", "cafe": "בית קפה", "fast_food": "אוכל מהיר",
 }
 
 _CURRENCY = {
@@ -37,7 +38,7 @@ def _estimated_cost(item: dict, city: str) -> str | None:
     currency = _CURRENCY.get(city, "מטבע מקומי")
     ranges = {
         "museum": "12–25", "gallery": "8–20", "attraction": "10–25", "castle": "12–25",
-        "zoo": "20–40", "theme_park": "30–60",
+        "zoo": "20–40", "theme_park": "30–60", "restaurant": "15–35", "cafe": "5–15",
     }
     if venue_type in ranges:
         return f"כ־{ranges[venue_type]} {currency} לאדם"
@@ -96,11 +97,11 @@ def find_venue(name: str, city: str) -> dict | None:
 
 
 def enrich_trip_locations(trip, city: str) -> None:
-    """Attach OSM evidence to attractions without inventing a location."""
+    """Attach OSM evidence to named attractions and meal venues only."""
     seen, looked_up = set(), False
     for day in trip.days:
         for activity in day.activities:
-            if activity.kind != "attraction" or activity.name in seen:
+            if activity.kind not in {"attraction", "meal"} or activity.name in seen:
                 continue
             seen.add(activity.name)
             # Nominatim is a shared public service. The planner's single lock

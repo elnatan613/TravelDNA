@@ -29,3 +29,17 @@ def test_venue_lookup_does_not_create_an_address_when_no_result():
     find_venue.cache_clear()
     with patch("app.location_lookup.requests.get", return_value=response):
         assert find_venue("מקום כללי", "Paris") is None
+
+
+def test_restaurant_gets_the_same_place_details_and_cost_range():
+    response = Mock()
+    response.json.return_value = [{
+        "lat": "48.85", "lon": "2.35", "address": {"road": "Rue Example", "city": "Paris"},
+        "type": "restaurant", "extratags": {},
+    }]
+    find_venue.cache_clear()
+    with patch("app.location_lookup.requests.get", return_value=response):
+        result = find_venue("מסעדת דוגמה", "Paris")
+
+    assert result["venue_type"] == "מסעדה"
+    assert result["estimated_cost"] == "כ־15–35 אירו לאדם"
