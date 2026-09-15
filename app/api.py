@@ -97,13 +97,16 @@ def match(request: MatchRequest):
 
 @app.post("/api/plan")
 def plan(request: TripRequest, http_request: Request):
-    enforce_rate_limit(http_request, "plan", limit=3, window_seconds=600)
     destination = next((d for d in destinations() if d["city"] == request.city), None)
     if destination is None:
         raise HTTPException(422, "היעד אינו נתמך")
-    if not planning_lock.acquire(blocking=False):
-        raise HTTPException(429, "מסלול אחר נמצא בבנייה. נסו שוב בעוד מעט.")
+    # The public providers used while building a trip have strict request
+    # limits. Queue requests in this process instead of turning another
+    # visitor's active build into an error for the current visitor.
+    if not planning_lock.acquire(timeout=180):
+        raise HTTPException(503, "התכנון מתעכב מהרגיל. נסו שוב בעוד רגע.")
     try:
+        enforce_rate_limit(http_request, "plan", limit=3, window_seconds=600)
         from agent.structured_trip import build_structured_trip
         trip, review = build_structured_trip(get_agent(), request)
         return {"request": request.model_dump(mode="json"), "itinerary": trip.model_dump(mode="json"),
