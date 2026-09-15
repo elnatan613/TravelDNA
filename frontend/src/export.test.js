@@ -19,3 +19,10 @@ test('time toggle only hides proposed times, not dates or activities',()=>{
   assert.ok(text.includes('2026-10-01'));
   assert.ok(text.includes('מוזיאון'));
 });
+test('export includes the last-year weather comparison when supplied',()=>{
+  const text=itineraryText({...result, packing:{...result.packing,
+    comparison:{summary:'בשנה שעברה היה גשום.'},
+    historical_daily:[{date:'2025-10-01',low:9,high:15,rain_mm:7}]}});
+  assert.ok(text.includes('מזג אוויר באותם תאריכים בשנה שעברה'));
+  assert.ok(text.includes('2025-10-01: 9–15 מעלות, 7 מ״מ גשם'));
+});

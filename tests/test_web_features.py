@@ -100,28 +100,41 @@ def test_meals_do_not_need_opening_hours_or_make_a_day_overloaded():
     assert not any("ארוחת צהריים: שעות" in item for item in report["unknown"])
 
 
-def test_outside_forecast_never_calls_weather():
-    with patch("app.weather.requests.get") as get:
-        report = packing_for_trip({}, date.today()+timedelta(days=14), 3)
-    get.assert_not_called()
-    assert report["status"] == "unavailable"
+def test_future_trip_uses_last_year_weather_when_a_forecast_is_not_available():
+    start = date.today() + timedelta(days=14)
+    historic_start = start.replace(year=start.year - 1)
+    response = Mock()
+    response.json.return_value = {"daily": {"time": [(historic_start + timedelta(days=i)).isoformat() for i in range(3)],
+        "temperature_2m_min": [4, 5, 6], "temperature_2m_max": [12, 13, 14],
+        "precipitation_sum": [6, 0, 0], "wind_speed_10m_max": [18, 20, 22]}}
+    with patch("app.weather.requests.get", return_value=response) as get:
+        report = packing_for_trip({"lat": 48, "lng": 2}, start, 3)
+    assert get.call_args.args[0] == "https://archive-api.open-meteo.com/v1/archive"
+    assert report["status"] == "historical"
+    assert report["historical_daily"][0]["rain_mm"] == 6
+    assert "מעיל גשם או מטרייה" in report["items"]
 
 
 def test_rain_and_cold_packing():
-    response = Mock()
-    response.json.return_value = {"daily": {"time": [date.today().isoformat()], "temperature_2m_min": [3],
-        "temperature_2m_max": [12], "precipitation_probability_max": [80]}}
-    with patch("app.weather.requests.get", return_value=response):
+    forecast = Mock()
+    forecast.json.return_value = {"daily": {"time": [date.today().isoformat()], "temperature_2m_min": [3],
+        "temperature_2m_max": [12], "precipitation_probability_max": [80], "wind_speed_10m_max": [15]}}
+    historic = Mock()
+    last_year = date.today().replace(year=date.today().year - 1)
+    historic.json.return_value = {"daily": {"time": [last_year.isoformat()], "temperature_2m_min": [5],
+        "temperature_2m_max": [14], "precipitation_sum": [1], "wind_speed_10m_max": [16]}}
+    with patch("app.weather.requests.get", side_effect=[forecast, historic]):
         report = packing_for_trip({"lat": 48, "lng": 2}, date.today(), 1)
     assert report["status"] == "forecast"
     assert "מעיל חם" in report["items"]
     assert "מעיל גשם או מטרייה" in report["items"]
+    assert report["comparison"]["last_year_rain_mm"] == 1
 
 
 def test_partial_forecast_is_not_presented_as_complete():
     response = Mock()
     response.json.return_value = {"daily": {"time": [date.today().isoformat()], "temperature_2m_min": [None],
-        "temperature_2m_max": [12], "precipitation_probability_max": [80]}}
+        "temperature_2m_max": [12], "precipitation_probability_max": [80], "wind_speed_10m_max": [10]}}
     with patch("app.weather.requests.get", return_value=response):
         assert packing_for_trip({"lat": 48, "lng": 2}, date.today(), 1)["status"] == "unavailable"
 

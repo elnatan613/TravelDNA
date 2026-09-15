@@ -6,3 +6,5 @@
 .validation-ok{padding:13px 15px;border-radius:10px;background:#edf4e7;color:#44623e;font-size:13px}.validation-gaps{margin-top:20px;padding:18px 20px;border:1px solid #e3e9d9;border-radius:12px;background:#fafcf7}.validation-gaps h4{margin:0 0 8px}.validation-gaps p{margin:6px 0;color:#596c55;font-size:13px}.validation-gaps details{margin-bottom:0}
 @media(max-width:700px){.build-steps{width:100%;max-width:320px;text-align:right}.build-steps li{align-items:flex-start}.build-label{padding-top:2px}}
 @media print{header,.controls,.tabs,.no-print,footer,.sources,.check{display:none!important}body,:root{background:white!important;color:#182f28!important}.workspace{display:block}.results{width:100%}.card{box-shadow:none;border-color:#dbe2d7}.result-heading{margin:0 0 18px}.day,.activity{break-inside:avoid}.report{page-break-before:always}}
+
+.weather-heading{margin-top:20px}.weather{margin:12px 0 20px}.weather small{line-height:1.45}.weather-comparison{margin:26px 0 0;padding-top:22px;border-top:1px solid #e3e8dc}.weather-comparison h4{margin-bottom:4px}.weather-comparison p{margin:0;color:#596c55;font-size:13px}.weather.historical>div{background:#f7f3e8}

@@ -7,6 +7,8 @@ export function itineraryText(result, showHours = true) {
     ...(result.guide_review ? result.guide_review.notes : ['ההמלצות אינן זמינות']),
     'מה לארוז', result.packing.message, ...result.packing.items,
     ...result.packing.daily.map(d => `${d.date}: ${d.low}–${d.high} מעלות, ${d.rain}% סיכוי לגשם`),
+    ...(result.packing.comparison ? ['מזג אוויר באותם תאריכים בשנה שעברה', result.packing.comparison.summary,
+      ...(result.packing.historical_daily || []).map(d => `${d.date}: ${d.low}–${d.high} מעלות, ${d.rain_mm} מ״מ גשם`)] : []),
     'מקורות', ...t.sources, ...(result.packing.status === 'forecast' ? [result.packing.source] : [])].join('\n');
 }
 
