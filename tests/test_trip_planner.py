@@ -123,6 +123,7 @@ def test_plan_trip_supported_city_calls_llm_with_tools():
     system_instruction = create_kwargs["config"].system_instruction
     assert "Hebrew" in system_instruction
     assert "מקורות" in system_instruction
+    assert "2-3 sentence" in system_instruction
     sent_prompt = fake_chat.send_message.call_args.args[0]
     assert "Paris" in sent_prompt and "2-day" in sent_prompt and "300" in sent_prompt
     assert "LIVE VENUE CANDIDATES" in sent_prompt

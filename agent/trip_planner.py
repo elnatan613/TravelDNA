@@ -90,9 +90,16 @@ When you write the day-by-day itinerary:
   categories are not recommendations. Use the venue's proper name. If the
   search results do not contain a named venue, make that block flexible free
   time instead of pretending it is an attraction.
+- For every named attraction, write a useful 2-3 sentence description: what
+  the traveler will actually see or do, why it fits this itinerary, and the
+  relevant neighbourhood, street or nearby landmark when it appears in the
+  curated guide or live candidate pool. Do not replace this with vague wording
+  such as "explore the area" or "walk around downtown". Only state hours,
+  booking requirements or exact prices when a source returned them.
 - Meals are recommendations too: when recommending breakfast, lunch, dinner
   or coffee, name one specific restaurant, café or food market from the search
-  results. If no named food venue is available, call it flexible meal time.
+  results. Explain the meal choice briefly only when supported by a source. If
+  no named food venue is available, call it flexible meal time.
 - Build a varied route across the requested days. Do not recommend the same
   venue twice anywhere in the itinerary. Before writing, gather a pool of
   distinct named venues large enough for the number of days, and group nearby
@@ -141,6 +148,7 @@ class TripPlanningAgent:
             from app.location_lookup import candidate_pool_for_planning
             venue_provider = candidate_pool_for_planning
         self.venue_provider = venue_provider
+        self.last_candidate_pool = ""
 
     def search_knowledge(self, city: str, query: str) -> str:
         """Search the curated travel knowledge base for a specific city.
@@ -194,6 +202,7 @@ class TripPlanningAgent:
             # The curated guide remains a valid evidence source if live OSM
             # candidate discovery is temporarily unavailable.
             candidate_pool = "No live venue candidates were available; use only named venues from the curated guide."
+        self.last_candidate_pool = candidate_pool
         prompt = (
             f"Plan a {days}-day trip to {city}. "
             f"Total budget: ${budget_total_usd} USD (excluding flights and accommodation). "

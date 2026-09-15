@@ -162,6 +162,7 @@ def test_structuring_strips_invented_evidence_and_sources():
     generated.sources = ["https://example.com/source", "https://invented.com"]
     agent = Mock()
     agent.plan_trip.return_value = "מסלול\nhttps://example.com/source"
+    agent.last_candidate_pool = "- museum: Orangerie"
     agent.client.models.generate_content.side_effect = [Mock(text=generated.model_dump_json()),
                                                       Mock(text='{"score":70,"notes":["קחו הפסקה"]}')]
     with patch("app.location_lookup.enrich_trip_locations") as enrich:
@@ -171,6 +172,9 @@ def test_structuring_strips_invented_evidence_and_sources():
     assert result.days[0].activities[0].closed is None
     enrich.assert_called_once_with(result, "Paris")
     assert review["score"] == 70
+    conversion_prompt = agent.client.models.generate_content.call_args_list[0].kwargs["contents"]
+    assert "LIVE NAMED VENUE POOL" in conversion_prompt
+    assert "Orangerie" in conversion_prompt
 
 
 def test_structuring_rejects_wrong_dates():
