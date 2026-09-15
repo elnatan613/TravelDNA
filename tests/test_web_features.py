@@ -23,12 +23,14 @@ def test_unknown_data_cannot_pass_validation():
     assert report["status"] == "partial"
     assert report["unknown"]
     assert report["coverage_percent"] < 100
+    assert report["score"] < 100
 
 
 def test_overlap_and_heavy_day():
     report = validate_itinerary(trip([activity(heavy=True) for _ in range(4)]))
     assert any("חופפת" in s for s in report["issues"])
     assert any("עמוס" in s for s in report["issues"])
+    assert report["score"] < 70
 
 
 def test_closure_requires_dated_evidence():

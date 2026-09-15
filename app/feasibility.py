@@ -80,8 +80,18 @@ def validate_itinerary(trip: Itinerary, pace="balanced"):
                     # A conservative impossibility screen, never a routing estimate.
                     if km > 2 and gap < km / 130 * 60:
                         issues.append(f"{label}: מרחק אווירי של {km:.1f} ק״מ אינו סביר בזמן המעבר שהוקצה.")
+    coverage_percent = round(100 * checked / (checked + len(unknown)))
+    issue_penalty = min(60, len(issues) * 12)
+    evidence_penalty = round((100 - coverage_percent) * 0.4)
     return {
         "status": "issues" if issues else "partial" if unknown else "passed",
         "issues": issues, "unknown": unknown, "checks_performed": checked,
-        "coverage_percent": round(100 * checked / (checked + len(unknown))),
+        "coverage_percent": coverage_percent,
+        # A reproducible feasibility score: verified coverage supplies up to
+        # 40 points of the uncertainty component; concrete conflicts cost 12.
+        "score": max(0, 100 - issue_penalty - evidence_penalty),
+        "score_explanation": {
+            "issue_penalty": issue_penalty,
+            "evidence_penalty": evidence_penalty,
+        },
     }
