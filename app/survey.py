@@ -109,8 +109,8 @@ def interpret_notes(notes):
     )
     from google.genai import errors
     last_error = None
-    primary_model = "gemini-3.6-flash"
-    for model in (primary_model, "gemini-3.5-flash-lite"):
+    primary_model = "gemini-3.5-flash-lite"
+    for model in (primary_model, "gemini-3.6-flash"):
         try:
             response = client.models.generate_content(
                 model=model, contents=prompt,

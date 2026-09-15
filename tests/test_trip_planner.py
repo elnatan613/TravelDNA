@@ -126,7 +126,7 @@ def test_plan_trip_supported_city_calls_llm_with_tools():
     assert "Paris" in sent_prompt and "2-day" in sent_prompt and "300" in sent_prompt
 
 
-def test_plan_trip_uses_lite_model_when_primary_is_rate_limited():
+def test_plan_trip_uses_3_6_fallback_when_lite_model_is_rate_limited():
     from google.genai.errors import APIError
     primary_chat, lite_chat = mock.Mock(), mock.Mock()
     primary_chat.send_message.side_effect = APIError(429, {"error": {"message": "rate limit", "code": 429}})
@@ -137,9 +137,9 @@ def test_plan_trip_uses_lite_model_when_primary_is_rate_limited():
     with mock.patch("agent.trip_planner.available_cities", return_value=["Paris"]):
         assert agent.plan_trip("Paris", 1, 100) == "מסלול לדוגמה"
 
-    assert agent.active_model == "gemini-3.5-flash-lite"
+    assert agent.active_model == "gemini-3.6-flash"
     assert [call.kwargs["model"] for call in agent.client.chats.create.call_args_list] == [
-        "gemini-3.6-flash", "gemini-3.5-flash-lite"
+        "gemini-3.5-flash-lite", "gemini-3.6-flash"
     ]
 
 

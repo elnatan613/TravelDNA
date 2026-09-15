@@ -54,8 +54,10 @@ def _load_dotenv_file(path):
 
 _load_dotenv_file(os.path.join(_PROJECT_ROOT, ".env"))
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
-GEMINI_MODEL = "gemini-3.6-flash"
-GEMINI_FALLBACK_MODEL = "gemini-3.5-flash-lite"
+# The responsive Lite model is the default interactive experience. Keep 3.6
+# available as a higher-capability fallback when Lite is temporarily unavailable.
+GEMINI_MODEL = "gemini-3.5-flash-lite"
+GEMINI_FALLBACK_MODEL = "gemini-3.6-flash"
 
 SYSTEM_INSTRUCTION = """You are a trip-planning assistant for the TravelDNA app.
 
