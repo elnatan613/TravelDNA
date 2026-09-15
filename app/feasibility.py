@@ -2,6 +2,7 @@
 from math import asin, cos, radians, sin, sqrt
 
 from app.trip_models import Itinerary
+from app.opening_hours import hours_for_date
 
 
 def minutes(value):
@@ -37,7 +38,7 @@ def validate_itinerary(trip: Itinerary, pace="balanced"):
                 issues.append(f"{label}: שעת הסיום אינה מאוחרת משעת ההתחלה.")
             # Restaurants and planned pauses are flexible choices, not named
             # venues in this itinerary. Opening-hours checks apply only to
-            # attractions with dated evidence.
+            # attractions with dated evidence or a simple OSM schedule.
             if activity.kind == "attraction" and activity.opening_source and activity.opening_date == day.date and (
                 activity.closed is True or (activity.opening_start and activity.opening_end)
             ):
@@ -45,7 +46,16 @@ def validate_itinerary(trip: Itinerary, pace="balanced"):
                 if activity.closed or start < minutes(activity.opening_start) or end > minutes(activity.opening_end):
                     issues.append(f"{label}: הפעילות מחוץ לשעות הפתיחה שסופקו לתאריך זה.")
             elif activity.kind == "attraction":
-                unknown.append(f"{label}: שעות הפתיחה לתאריך זה לא אומתו.")
+                schedule = hours_for_date(activity.opening_hours, day.date)
+                if schedule is None:
+                    unknown.append(f"{label}: שעות הפתיחה לתאריך זה לא אומתו.")
+                else:
+                    checked += 1
+                    status, opening_start, opening_end = schedule
+                    if status == "closed":
+                        issues.append(f"{label}: לפי שעות OpenStreetMap המקום סגור בתאריך זה.")
+                    elif start < minutes(opening_start) or end > minutes(opening_end):
+                        issues.append(f"{label}: הפעילות מחוץ לשעות OpenStreetMap שפורסמו למקום.")
             if index == 0:
                 continue
             previous = activities[index-1]

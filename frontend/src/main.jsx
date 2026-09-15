@@ -24,6 +24,8 @@ function App() {
   const [start, setStart] = useState(localDate()), [days, setDays] = useState(3), [budget, setBudget] = useState(500), [pace, setPace] = useState('balanced');
   const [busy, setBusy] = useState(''), [error, setError] = useState(''), [result, setResult] = useState(null), [tab, setTab] = useState('trip'), [hours, setHours] = useState(true);
   const [packed, setPacked] = useState({});
+  const [planStage, setPlanStage] = useState(0);
+  const planStages = ['בונים מסלול לפי הבחירות שלכם', 'מאתרים כתובות ופרטים על המקומות', 'בודקים שעות פתיחה וזמני הליכה'];
   const validationGaps = result ? result.validation.unknown.reduce((gaps, item) => {
     if (item.includes('שעות הפתיחה')) gaps.opening += 1;
     else if (item.includes('זמן המעבר')) gaps.travel += 1;
@@ -32,6 +34,13 @@ function App() {
   }, {opening: 0, travel: 0, other: 0}) : {opening: 0, travel: 0, other: 0};
   useEffect(() => { api('cities').then(setCities).catch(e => setError(e.message)); }, []);
   useEffect(()=>{try{sessionStorage.setItem(DRAFT_KEY,JSON.stringify(draft));}catch{/* Session storage is optional. */}},[draft]);
+  useEffect(() => {
+    if (busy !== 'plan') return undefined;
+    setPlanStage(0);
+    const addresses = window.setTimeout(() => setPlanStage(1), 2500);
+    const validation = window.setTimeout(() => setPlanStage(2), 6500);
+    return () => { window.clearTimeout(addresses); window.clearTimeout(validation); };
+  }, [busy]);
   const selected = cities.find(c => c.city === city);
   async function finishSurvey(direct) {
     setBusy('match'); setError('');
@@ -66,7 +75,7 @@ function App() {
       <label>תקציב כולל בדולר<input required type="number" min="1" max="1000000" value={budget} onChange={e => setBudget(e.target.value)}/><small>ללא טיסות ולינה</small></label>
       <label>הקצב שלכם<select value={pace} onChange={e => setPace(e.target.value)}><option value="relaxed">רגוע · זמן לנשום</option><option value="balanced">מאוזן · קצת מכל דבר</option><option value="busy">מלא · להספיק ולגלות</option></select></label>
       <button className="primary wide" disabled={!!busy || !cities.length}>{busy === 'plan' ? 'בונה את הטיול שלכם…' : 'בנו לי מסלול אישי ←'}</button></form></aside>
-      <section className="results" aria-live="polite">{error && <div className="error" role="alert">{error}</div>}{busy === 'plan' ? <div className="card empty"><div className="spinner"/><h2>הטיול שלכם מקבל צורה</h2><p>אוספים מידע, בונים מסלול ובודקים את הקצב.<br/>זה עשוי לקחת כמה דקות.</p></div> : !result ? <div className="card empty"><div className="compass">✳</div><p className="eyebrow">מקום חדש. סיפור חדש.</p><h2>{selected ? `אולי ${selected.label}?` : 'המסלול הבא מתחיל כאן'}</h2><p>{selected?.background || 'בחרו יעד ותאריכים, ואנחנו נחבר את כל הפרטים.'}</p><div className="empty-grid"><span>01<br/><b>בחרו מה מתאים</b></span><span>02<br/><b>קבלו מסלול</b></span><span>03<br/><b>צאו לגלות</b></span></div><small>רקע היעדים: Wikivoyage · CC BY-SA 4.0</small></div> : <>
+      <section className="results" aria-live="polite">{error && <div className="error" role="alert">{error}</div>}{busy === 'plan' ? <div className="card empty"><div className="spinner"/><h2>הטיול שלכם מקבל צורה</h2><p>{planStages[planStage]}</p><ol className="build-steps">{planStages.map((stage, index) => <li key={stage} className={index <= planStage ? 'active' : ''}>{index < planStage ? '✓' : String(index + 1).padStart(2, '0')}<span>{stage}</span></li>)}</ol><small>אפשר להשאיר את העמוד פתוח בזמן שהתכנון נמשך.</small></div> : !result ? <div className="card empty"><div className="compass">✳</div><p className="eyebrow">מקום חדש. סיפור חדש.</p><h2>{selected ? `אולי ${selected.label}?` : 'המסלול הבא מתחיל כאן'}</h2><p>{selected?.background || 'בחרו יעד ותאריכים, ואנחנו נחבר את כל הפרטים.'}</p><div className="empty-grid"><span>01<br/><b>בחרו מה מתאים</b></span><span>02<br/><b>קבלו מסלול</b></span><span>03<br/><b>צאו לגלות</b></span></div><small>רקע היעדים: Wikivoyage · CC BY-SA 4.0</small></div> : <>
       <div className="result-heading"><div><p className="eyebrow">ההרפתקה שלכם מוכנה</p><h2>{cities.find(c=>c.city===result.request.city)?.label} · {result.request.days} ימים</h2><p className="muted">{result.request.start_date} · {result.request.budget} דולר</p></div><button className="secondary" onClick={exportText}>↓ ייצוא לקובץ</button></div>
       <nav className="tabs" aria-label="פרטי הטיול">{[['trip','המסלול שלי'],['validation','בדיקת היתכנות'],['packing','מה במזוודה?']].map(([id,label]) => <button key={id} aria-pressed={tab===id} className={tab===id?'active':''} onClick={()=>setTab(id)}>{label}</button>)}</nav>
       {tab === 'trip' && <><div className="card summary"><p>{result.itinerary.summary}</p><label className="check"><input type="checkbox" checked={hours} onChange={e=>setHours(e.target.checked)}/> הצגת פירוט שעות משוער</label></div>{result.itinerary.days.map((d,i)=><article className="card day" key={d.date}><div className="day-title"><span className="step">{String(i+1).padStart(2,'0')}</span><h3>יום {i+1}</h3><span className="muted">{d.date}</span></div>{d.activities.map((a,j)=><div className="activity" key={j}>{hours && <time dir="ltr">{a.start}–{a.end}</time>}<div><h4>{a.name}</h4><p>{a.description}</p>{a.travel_minutes !== null && a.travel_minutes !== undefined && <p className="travel-time">כ־{a.travel_minutes} דקות הליכה מהאטרקציה הקודמת · OpenStreetMap</p>}{a.address && <div className="place-details">{a.venue_type && <span>{a.venue_type}</span>}<span>⌖ {a.address}{a.map_url && <> · <a href={a.map_url} target="_blank" rel="noreferrer">למפה ↗</a></>}</span>{a.opening_hours && <span>שעות לפי OpenStreetMap: <b dir="ltr">{a.opening_hours}</b></span>}{a.estimated_cost && <span>עלות משוערת: {a.estimated_cost}</span>}{a.website && <a href={a.website} target="_blank" rel="noreferrer">האתר הרשמי ↗</a>}<small>כתובת ושעות: OpenStreetMap · עלות היא הערכה, לא מחיר רשמי</small></div>}</div></div>)}</article>)}<div className="sources">מקורות: {result.itinerary.sources.filter(s=>/^https?:\/\//i.test(s)).map((s,i)=><a key={i} href={s} target="_blank" rel="noreferrer">מקור {i+1} ↗</a>)}</div></>}

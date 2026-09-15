@@ -38,6 +38,25 @@ def test_closure_requires_dated_evidence():
     assert report["status"] == "partial"
 
 
+def test_simple_osm_hours_are_checked_for_the_actual_weekday():
+    trip_on_tuesday = Itinerary(summary="מסלול", sources=[], days=[TripDay(
+        date=date(2026, 9, 15), activities=[activity(opening_hours="Tu-Su 10:00-18:00")]
+    )])
+    report = validate_itinerary(trip_on_tuesday)
+    assert any("שעות OpenStreetMap" in issue for issue in report["issues"])
+    assert not any("שעות הפתיחה" in item for item in report["unknown"])
+
+    trip_on_monday = Itinerary(summary="מסלול", sources=[], days=[TripDay(
+        date=date(2026, 9, 14), activities=[activity(opening_hours="Tu-Su 10:00-18:00")]
+    )])
+    assert any("סגור" in issue for issue in validate_itinerary(trip_on_monday)["issues"])
+
+
+def test_complex_osm_hours_stay_unverified():
+    report = validate_itinerary(trip([activity(opening_hours="Mo-Fr 09:00-12:00,13:00-17:00")]))
+    assert any("שעות הפתיחה" in item for item in report["unknown"])
+
+
 def test_travel_and_geographic_impossibility():
     first = activity(latitude=48.8, longitude=2.3, location_source="source")
     second = Activity(name="אתר", description="ביקור", start="11:10", end="12:00", travel_minutes=60, travel_source="route")
