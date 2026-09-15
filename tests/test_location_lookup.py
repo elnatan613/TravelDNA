@@ -1,6 +1,6 @@
 from unittest.mock import Mock, patch
 
-from app.location_lookup import find_venue
+from app.location_lookup import candidate_pool_for_planning, find_venue, venue_candidates
 
 
 def test_venue_lookup_returns_a_verified_address_and_map():
@@ -43,3 +43,22 @@ def test_restaurant_gets_the_same_place_details_and_cost_range():
 
     assert result["venue_type"] == "מסעדה"
     assert result["estimated_cost"] == "כ־15–35 אירו לאדם"
+
+
+def test_candidate_pool_returns_distinct_named_places_across_categories():
+    response = Mock()
+    response.json.side_effect = [
+        [{"display_name": "Louvre Museum, Paris", "address": {"city": "Paris"}}],
+        [{"display_name": "Orangerie, Paris", "address": {"city": "Paris"}}],
+        [{"display_name": "Marché des Enfants Rouges, Paris", "address": {"city": "Paris"}}],
+        [{"display_name": "Tuileries Garden, Paris", "address": {"city": "Paris"}}],
+        [{"display_name": "Le Petit Paris, Paris", "address": {"city": "Paris"}}],
+        [{"display_name": "Café de Flore, Paris", "address": {"city": "Paris"}}],
+    ]
+    venue_candidates.cache_clear()
+    with patch("app.location_lookup.requests.get", return_value=response), patch("app.location_lookup.sleep"):
+        pool = candidate_pool_for_planning("Paris", 3)
+
+    assert "Louvre Museum" in pool
+    assert "Café de Flore" in pool
+    assert pool.count("Paris") >= 6

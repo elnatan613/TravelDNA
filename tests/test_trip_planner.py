@@ -23,7 +23,8 @@ with mock.patch("google.genai.Client"):
 
 def _make_agent(retriever=None):
     with mock.patch("agent.trip_planner.genai.Client"):
-        return TripPlanningAgent(api_key="fake-key-for-tests", retriever=retriever or mock.Mock())
+        return TripPlanningAgent(api_key="fake-key-for-tests", retriever=retriever or mock.Mock(),
+                                 venue_provider=lambda city, days: "- museum: Louvre")
 
 
 def test_init_raises_without_api_key():
@@ -124,6 +125,7 @@ def test_plan_trip_supported_city_calls_llm_with_tools():
     assert "מקורות" in system_instruction
     sent_prompt = fake_chat.send_message.call_args.args[0]
     assert "Paris" in sent_prompt and "2-day" in sent_prompt and "300" in sent_prompt
+    assert "LIVE VENUE CANDIDATES" in sent_prompt
 
 
 def test_plan_trip_uses_3_6_fallback_when_lite_model_is_rate_limited():

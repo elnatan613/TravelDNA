@@ -1,13 +1,16 @@
 """Best-effort venue lookup using the project's existing OpenStreetMap source."""
 from functools import lru_cache
 import logging
-from time import sleep
+from threading import Lock
+from time import monotonic, sleep
 
 import requests
 
 
 NOMINATIM_URL = "https://nominatim.openstreetmap.org/search"
 HEADERS = {"User-Agent": "TravelDNA-course-project/1.0 (venue lookup)"}
+_nominatim_lock = Lock()
+_last_nominatim_request = 0.0
 
 _TYPE_LABELS = {
     "museum": "מוזיאון", "gallery": "גלריה", "attraction": "אטרקציה",
@@ -24,6 +27,24 @@ _CURRENCY = {
     "Budapest": "פורינט", "Krakow": "זלוטי", "Reykjavik": "קרונה איסלנדית",
     "Copenhagen": "קרונה דנית", "Stockholm": "קרונה שוודית", "Edinburgh": "ליש״ט",
 }
+
+_CANDIDATE_CATEGORIES = ("museum", "gallery", "market", "park", "restaurant", "cafe")
+
+
+def _nominatim_search(params: dict) -> list[dict]:
+    """Use Nominatim respectfully: one serialized request per second."""
+    global _last_nominatim_request
+    with _nominatim_lock:
+        wait = 1 - (monotonic() - _last_nominatim_request)
+        if wait > 0:
+            sleep(wait)
+        try:
+            response = requests.get(NOMINATIM_URL, params=params, headers=HEADERS, timeout=8)
+            response.raise_for_status()
+            rows = response.json()
+            return rows if isinstance(rows, list) else []
+        finally:
+            _last_nominatim_request = monotonic()
 
 
 def _venue_type(item: dict) -> str | None:
@@ -57,16 +78,9 @@ def _address(tags: dict) -> str | None:
 def find_venue(name: str, city: str) -> dict | None:
     """Return verified OSM evidence, or None when a place cannot be identified."""
     try:
-        response = requests.get(
-            NOMINATIM_URL,
-            params={"q": f"{name}, {city}", "format": "jsonv2", "limit": 1,
-                    "addressdetails": 1, "extratags": 1, "namedetails": 1,
-                    "accept-language": "he"},
-            headers=HEADERS,
-            timeout=8,
-        )
-        response.raise_for_status()
-        rows = response.json()
+        rows = _nominatim_search({"q": f"{name}, {city}", "format": "jsonv2", "limit": 1,
+                                  "addressdetails": 1, "extratags": 1, "namedetails": 1,
+                                  "accept-language": "he"})
         if not rows:
             return None
         item = rows[0]
@@ -96,6 +110,56 @@ def find_venue(name: str, city: str) -> dict | None:
         return None
 
 
+def _candidate_name(item: dict) -> str | None:
+    names = item.get("namedetails") or {}
+    name = names.get("name") or names.get("name:en") or item.get("name")
+    if not name:
+        name = (item.get("display_name") or "").split(",", maxsplit=1)[0]
+    return name.strip() if isinstance(name, str) and name.strip() else None
+
+
+@lru_cache(maxsize=64)
+def venue_candidates(city: str, per_category: int = 3) -> tuple[dict, ...]:
+    """Find a bounded, diverse set of named places before an itinerary is written.
+
+    These are candidate names, not opening-hours or price claims. Full details
+    are still looked up only for the places selected in the final itinerary.
+    """
+    candidates, seen = [], set()
+    for category in _CANDIDATE_CATEGORIES:
+        try:
+            rows = _nominatim_search({"q": f"{category}, {city}", "format": "jsonv2",
+                                      "limit": per_category, "addressdetails": 1,
+                                      "namedetails": 1, "accept-language": "en"})
+        except requests.RequestException:
+            logging.getLogger(__name__).info("OpenStreetMap candidate lookup unavailable for %s", city)
+            continue
+        for item in rows:
+            name = _candidate_name(item)
+            if not name:
+                continue
+            key = "".join(name.casefold().split())
+            if key in seen:
+                continue
+            seen.add(key)
+            address = _address(item.get("address", {}))
+            candidates.append({"name": name, "category": category, "area": address})
+    return tuple(candidates)
+
+
+def candidate_pool_for_planning(city: str, days: int) -> str:
+    """Format enough live, named candidates for a multi-day planning prompt."""
+    per_category = min(5, max(2, (days + 1) // 2))
+    candidates = venue_candidates(city, per_category)
+    if not candidates:
+        return "No live venue candidates were available; use only named venues from the curated guide."
+    lines = []
+    for candidate in candidates:
+        area = f" — {candidate['area']}" if candidate["area"] else ""
+        lines.append(f"- {candidate['category']}: {candidate['name']}{area}")
+    return "\n".join(lines)
+
+
 def enrich_trip_locations(trip, city: str) -> None:
     """Attach OSM evidence to named attractions and meal venues only."""
     seen, looked_up = set(), False
@@ -104,11 +168,8 @@ def enrich_trip_locations(trip, city: str) -> None:
             if activity.kind not in {"attraction", "meal"} or activity.name in seen:
                 continue
             seen.add(activity.name)
-            # Nominatim is a shared public service. The planner's single lock
-            # keeps requests serial, and this keeps distinct requests to 1/s.
-            if looked_up:
-                sleep(1)
-            looked_up = True
+            # _nominatim_search serializes all calls, including the candidate
+            # pool requested before this enrichment step.
             location = find_venue(activity.name, city)
             if location:
                 for key, value in location.items():

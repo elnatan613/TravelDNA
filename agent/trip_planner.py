@@ -82,8 +82,8 @@ You have two tools:
 
 When you write the day-by-day itinerary:
 - Base factual claims (specific place names, practical details) ONLY on what
-  search_knowledge actually returned - never invent a specific venue name that
-  didn't come from a tool result.
+  search_knowledge or the live named venue candidate pool actually returned -
+  never invent a specific venue name that did not come from either source.
 - Every recommendation for an attraction must name one specific, identifiable
   venue: a particular museum, gallery, market, park, monument or viewpoint.
   “a gallery”, “the market”, “a museum”, “stroll downtown” and similar generic
@@ -115,7 +115,8 @@ class TripPlanningAgent:
     (כמה שניות), לא רוצים לעשות את זה בכל קריאה ל-plan_trip.
     """
 
-    def __init__(self, api_key: str | None = None, model: str = GEMINI_MODEL, retriever: Retriever | None = None):
+    def __init__(self, api_key: str | None = None, model: str = GEMINI_MODEL, retriever: Retriever | None = None,
+                 venue_provider=None):
         resolved_key = api_key or GEMINI_API_KEY
         if not resolved_key:
             raise RuntimeError(
@@ -136,6 +137,10 @@ class TripPlanningAgent:
         self.models = tuple(dict.fromkeys((model, GEMINI_FALLBACK_MODEL)))
         self.active_model = model
         self.retriever = retriever or Retriever()
+        if venue_provider is None:
+            from app.location_lookup import candidate_pool_for_planning
+            venue_provider = candidate_pool_for_planning
+        self.venue_provider = venue_provider
 
     def search_knowledge(self, city: str, query: str) -> str:
         """Search the curated travel knowledge base for a specific city.
@@ -183,11 +188,21 @@ class TripPlanningAgent:
                 "(ראו rag/build_knowledge_base.py כדי להוסיף עוד ערים)."
             )
 
+        try:
+            candidate_pool = self.venue_provider(city, days)
+        except Exception:
+            # The curated guide remains a valid evidence source if live OSM
+            # candidate discovery is temporarily unavailable.
+            candidate_pool = "No live venue candidates were available; use only named venues from the curated guide."
         prompt = (
             f"Plan a {days}-day trip to {city}. "
             f"Total budget: ${budget_total_usd} USD (excluding flights and accommodation). "
             f"Traveler preferences: {preferences or 'none given - keep it well-rounded'}. "
-            "For every attraction, recommend a concrete place with its proper name; do not use generic labels such as a market, a gallery or a museum."
+            "For every attraction, recommend a concrete place with its proper name; do not use generic labels such as a market, a gallery or a museum. "
+            "Here is a live, diverse pool of named OpenStreetMap candidates. Use it together with the curated guide, "
+            "choose different venues across the days, and keep names in Hebrew transliteration in the final answer. "
+            "Do not claim that a candidate is open or has a particular price unless search_knowledge supports it.\n"
+            f"LIVE VENUE CANDIDATES:\n{candidate_pool}"
         )
         last_provider_error = None
         for model in self.models:
