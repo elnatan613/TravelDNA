@@ -83,7 +83,7 @@ def build_structured_trip(agent, request):
     # Never let an LLM promote its own invented evidence into verified facts.
     for day in trip.days:
         for activity in day.activities:
-            for key in ("latitude", "longitude", "location_source", "address", "map_url", "opening_start", "opening_end",
+            for key in ("latitude", "longitude", "location_source", "address", "map_url", "venue_type", "opening_hours", "website", "estimated_cost", "opening_start", "opening_end",
                         "closed", "opening_source", "opening_date", "travel_minutes", "travel_source"):
                 setattr(activity, key, None)
     # The itinerary prose comes from the model, but location evidence does not:

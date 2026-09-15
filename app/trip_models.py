@@ -18,6 +18,10 @@ class Activity(BaseModel):
     location_source: str | None = None
     address: str | None = Field(default=None, max_length=500)
     map_url: str | None = Field(default=None, max_length=1000)
+    venue_type: str | None = Field(default=None, max_length=80)
+    opening_hours: str | None = Field(default=None, max_length=250)
+    website: str | None = Field(default=None, max_length=1000)
+    estimated_cost: str | None = Field(default=None, max_length=250)
     opening_start: str | None = Field(default=None, pattern=r"^(?:[01]\d|2[0-3]):[0-5]\d$")
     opening_end: str | None = Field(default=None, pattern=r"^(?:[01]\d|2[0-3]):[0-5]\d$")
     closed: bool | None = None
