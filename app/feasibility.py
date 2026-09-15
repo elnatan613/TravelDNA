@@ -53,9 +53,9 @@ def validate_itinerary(trip: Itinerary, pace="balanced"):
             checked += 1
             if gap < 0:
                 issues.append(f"{label}: הפעילות חופפת לפעילות הקודמת.")
-            if activity.kind in ("travel", "break"):
+            if activity.kind != "attraction":
                 continue
-            previous = next((a for a in reversed(activities[:index]) if a.kind not in ("travel", "break")), None)
+            previous = next((a for a in reversed(activities[:index]) if a.kind == "attraction"), None)
             if previous is None:
                 continue
             gap = start - minutes(previous.end)

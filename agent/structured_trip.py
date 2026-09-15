@@ -90,6 +90,8 @@ def build_structured_trip(agent, request):
     # only OpenStreetMap can attach a verified address or coordinates.
     from app.location_lookup import enrich_trip_locations
     enrich_trip_locations(trip, request.city)
+    from app.routing import enrich_trip_travel_times
+    enrich_trip_travel_times(trip)
     review = None
     try:
         response = agent.client.models.generate_content(

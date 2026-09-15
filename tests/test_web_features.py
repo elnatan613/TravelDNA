@@ -47,6 +47,16 @@ def test_travel_and_geographic_impossibility():
     assert any("מרחק אווירי" in s for s in validate_itinerary(trip([first, second]))["issues"])
 
 
+def test_meal_between_attractions_does_not_create_an_unverified_transfer():
+    first = activity()
+    meal = Activity(name="ארוחת צהריים", description="בחירה גמישה", start="11:00", end="12:00", kind="meal")
+    second = Activity(name="אתר", description="ביקור", start="12:30", end="14:00")
+
+    report = validate_itinerary(trip([first, meal, second]))
+
+    assert len([item for item in report["unknown"] if "זמן המעבר" in item]) == 1
+
+
 def test_invalid_time_rejected():
     with pytest.raises(ValueError):
         Activity(name="אתר", description="", start="25:00", end="26:00")
