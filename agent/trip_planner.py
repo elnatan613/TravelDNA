@@ -84,6 +84,12 @@ When you write the day-by-day itinerary:
 - Base factual claims (specific place names, practical details) ONLY on what
   search_knowledge actually returned - never invent a specific venue name that
   didn't come from a tool result.
+- Every recommendation for an attraction must name one specific, identifiable
+  venue: a particular museum, gallery, market, park, monument or viewpoint.
+  “a gallery”, “the market”, “a museum”, “stroll downtown” and similar generic
+  categories are not recommendations. Use the venue's proper name. If the
+  search results do not contain a named venue, make that block flexible free
+  time instead of pretending it is an attraction.
 - Structure the answer as one section per day.
 - Keep it concise and practical, not flowery.
 - End with a "מקורות" section that lists the unique source URLs returned by
@@ -173,7 +179,8 @@ class TripPlanningAgent:
         prompt = (
             f"Plan a {days}-day trip to {city}. "
             f"Total budget: ${budget_total_usd} USD (excluding flights and accommodation). "
-            f"Traveler preferences: {preferences or 'none given - keep it well-rounded'}."
+            f"Traveler preferences: {preferences or 'none given - keep it well-rounded'}. "
+            "For every attraction, recommend a concrete place with its proper name; do not use generic labels such as a market, a gallery or a museum."
         )
         last_provider_error = None
         for model in self.models:

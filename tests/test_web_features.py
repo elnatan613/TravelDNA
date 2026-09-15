@@ -182,6 +182,19 @@ def test_structuring_rejects_wrong_dates():
         build_structured_trip(agent, TripRequest(city="Paris", start_date=date.today()+timedelta(days=1), days=1))
 
 
+def test_generic_attractions_become_open_time_not_fake_recommendations():
+    from agent.structured_trip import _replace_generic_attractions
+    generic = Activity(name="שוק מקומי", description="ביקור", start="09:00", end="11:00")
+    named = Activity(name="שוק הילדים האדומים", description="ביקור", start="12:00", end="13:00")
+    itinerary = trip([generic, named])
+
+    _replace_generic_attractions(itinerary)
+
+    assert itinerary.days[0].activities[0].kind == "break"
+    assert itinerary.days[0].activities[0].name == "זמן חופשי"
+    assert itinerary.days[0].activities[1].kind == "attraction"
+
+
 def test_structuring_returns_basic_trip_when_provider_is_unavailable():
     from agent.structured_trip import build_structured_trip
     from agent.trip_planner import TripServiceUnavailable
